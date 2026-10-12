@@ -1,910 +1,249 @@
 <!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCI-LAB: SPACE LAB EMERGENCY</title>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --navy-black: #07111F;
-            --deep-blue: #0B1F3A;
-            --electric-blue: #00C8FF;
-            --cyan: #63F5FF;
-            --emergency-red: #FF334F;
-            --neon-green: #4DFFB5;
-            --white: #F3F8FF;
-            --gray: #4A5B73;
-            --glow-blue: 0 0 10px var(--electric-blue);
-            --glow-red: 0 0 15px var(--emergency-red);
-            --glow-green: 0 0 10px var(--neon-green);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Kanit', sans-serif; }
-        
-        body {
-            background-color: var(--navy-black);
-            color: var(--white);
-            background-image: 
-                linear-gradient(rgba(7, 17, 31, 0.9), rgba(7, 17, 31, 0.9)),
-                linear-gradient(0deg, transparent 24%, rgba(0, 200, 255, 0.1) 25%, rgba(0, 200, 255, 0.1) 26%, transparent 27%, transparent 74%, rgba(0, 200, 255, 0.1) 75%, rgba(0, 200, 255, 0.1) 76%, transparent 77%, transparent),
-                linear-gradient(90deg, transparent 24%, rgba(0, 200, 255, 0.1) 25%, rgba(0, 200, 255, 0.1) 26%, transparent 27%, transparent 74%, rgba(0, 200, 255, 0.1) 75%, rgba(0, 200, 255, 0.1) 76%, transparent 77%, transparent);
-            background-size: 100% 100%, 50px 50px, 50px 50px;
-            overflow-x: hidden;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Utility */
-        .hidden { display: none !important; }
-        .text-cyan { color: var(--cyan); }
-        .text-red { color: var(--emergency-red); }
-        .text-green { color: var(--neon-green); }
-        
-        /* Buttons */
-        button {
-            background: rgba(11, 31, 58, 0.8);
-            border: 1px solid var(--electric-blue);
-            color: var(--electric-blue);
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            transition: all 0.3s ease;
-            box-shadow: var(--glow-blue);
-        }
-        button:hover { background: var(--electric-blue); color: var(--navy-black); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; border-color: var(--gray); color: var(--gray); }
-        .btn-red { border-color: var(--emergency-red); color: var(--emergency-red); box-shadow: var(--glow-red); }
-        .btn-red:hover { background: var(--emergency-red); color: var(--white); }
-        .btn-green { border-color: var(--neon-green); color: var(--neon-green); box-shadow: var(--glow-green); }
-        .btn-green:hover { background: var(--neon-green); color: var(--navy-black); }
-
-        /* Inputs */
-        input, select {
-            background: rgba(7, 17, 31, 0.8);
-            border: 1px solid var(--electric-blue);
-            color: var(--white);
-            padding: 12px;
-            border-radius: 5px;
-            width: 100%;
-            margin-bottom: 15px;
-            font-size: 1rem;
-        }
-        input:focus { outline: none; box-shadow: var(--glow-blue); }
-
-        /* Layouts */
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; width: 100%; flex: 1; display: flex; flex-direction: column; }
-        .screen { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; animation: fadeIn 0.5s ease; }
-        
-        /* Teacher Icon */
-        #teacher-icon { position: absolute; top: 20px; left: 20px; font-size: 24px; cursor: pointer; color: var(--gray); transition: color 0.3s; z-index: 100; }
-        #teacher-icon:hover { color: var(--electric-blue); }
-
-        /* HUD Header */
-        .hud-header { display: flex; justify-content: space-between; width: 100%; border-bottom: 2px solid var(--electric-blue); padding-bottom: 10px; margin-bottom: 20px; align-items: center; }
-        .hud-title { font-size: 1.5rem; color: var(--cyan); text-shadow: var(--glow-blue); }
-        .hud-stats { display: flex; gap: 20px; font-weight: bold; }
-        
-        /* Game Layout */
-        .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; flex: 1; }
-        @media (max-width: 768px) { .game-grid { grid-template-columns: 1fr; } }
-        
-        .panel { background: rgba(11, 31, 58, 0.7); border: 1px solid var(--cyan); border-radius: 8px; padding: 15px; position: relative; overflow: hidden; }
-        .panel::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--cyan); box-shadow: var(--glow-blue); }
-        
-        /* Blocks & Slots */
-        .block-area { display: flex; flex-wrap: wrap; gap: 10px; min-height: 60px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px; border: 1px dashed var(--gray); }
-        .code-block { background: var(--deep-blue); border: 1px solid var(--electric-blue); padding: 8px 12px; border-radius: 4px; cursor: grab; font-family: monospace; font-size: 1.1rem; box-shadow: var(--glow-blue); user-select: none; }
-        .code-block.selected { background: var(--electric-blue); color: var(--navy-black); }
-        
-        .slot-area { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: center; min-height: 80px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; margin: 20px 0; }
-        .drop-slot { width: 100px; height: 45px; border: 2px dashed var(--gray); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .drop-slot.filled { border: 2px solid var(--neon-green); box-shadow: var(--glow-green); }
-        .drop-slot.active { border-color: var(--electric-blue); background: rgba(0, 200, 255, 0.1); }
-
-        /* Dict Display */
-        .dict-display { font-family: monospace; text-align: left; background: #000; padding: 15px; border-radius: 5px; border: 1px solid var(--gray); color: #fff; margin-top: 10px; white-space: pre-wrap; font-size: 1.1rem;}
-        .key { color: var(--electric-blue); }
-        .string { color: var(--neon-green); }
-        .number { color: #FFB300; }
-
-        /* Hearts */
-        .hearts { display: flex; gap: 5px; color: var(--emergency-red); font-size: 1.5rem; text-shadow: var(--glow-red); }
-        .heart.empty { color: var(--gray); text-shadow: none; }
-
-        /* Modals & Alerts */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: var(--deep-blue); border: 2px solid var(--electric-blue); padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; text-align: center; box-shadow: 0 0 20px var(--electric-blue); }
-        
-        /* Emergency Effect */
-        @keyframes flashRed { 0%, 100% { box-shadow: inset 0 0 0px var(--emergency-red); } 50% { box-shadow: inset 0 0 50px var(--emergency-red); } }
-        .emergency { animation: flashRed 1s infinite; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Loader */
-        .loader { border: 4px solid var(--gray); border-top: 4px solid var(--electric-blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Teacher Dashboard Table */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; }
-        th, td { border: 1px solid var(--gray); padding: 10px; text-align: left; }
-        th { background: rgba(0, 200, 255, 0.1); color: var(--cyan); }
-        .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; }
-        .bg-green { background: rgba(77, 255, 181, 0.2); color: var(--neon-green); }
-        .bg-red { background: rgba(255, 51, 79, 0.2); color: var(--emergency-red); }
-        .bg-gray { background: rgba(255, 255, 255, 0.1); color: var(--white); }
-
-        /* Settings Panel */
-        .settings-panel { background: #000; padding: 15px; border: 1px solid var(--emergency-red); border-radius: 5px; margin-bottom: 20px; text-align: left;}
-
-    </style>
-</head>
-<body>
-
-    <div id="teacher-icon" onclick="app.showScreen('teacher-login-screen')">⚙️</div>
-
-    <div class="container">
-        <!-- 1. Home / Setup Screen -->
-        <div id="home-screen" class="screen">
-            <h1 class="hud-title" style="font-size: 3rem; margin-bottom: 10px;">SCI-LAB</h1>
-            <h2 class="text-red" style="margin-bottom: 30px;">SPACE LAB EMERGENCY</h2>
-            <div class="panel" style="max-width: 400px; width: 100%;">
-                <h3>ข้อมูลนักวิทยาศาสตร์ฝึกหัด</h3>
-                <p style="font-size: 0.8rem; color: var(--gray); margin-bottom: 15px;">ระบุข้อมูลเพื่อลงทะเบียนเข้าสู่ระบบ</p>
-                <input type="text" id="stu-name" placeholder="ชื่อ-นามสกุล (ระบบจะตัดคำนำหน้าให้อัตโนมัติ)">
-                <div style="display: flex; gap: 10px;">
-                    <select id="stu-class">
-                        <option value="">-- เลือกชั้น --</option>
-                        <option value="ป.1">ป.1</option><option value="ป.2">ป.2</option><option value="ป.3">ป.3</option>
-                        <option value="ป.4">ป.4</option><option value="ป.5">ป.5</option><option value="ป.6">ป.6</option>
-                    </select>
-                    <input type="number" id="stu-no" placeholder="เลขที่" min="1" max="99">
-                </div>
-                <button onclick="app.verifyStudentInfo()" style="width: 100%;">ตรวจสอบข้อมูล</button>
-                <div id="stu-name-preview" class="text-cyan hidden" style="margin-top: 10px; font-weight: bold;"></div>
-                <div id="home-error" class="text-red hidden" style="margin-top: 10px;"></div>
-            </div>
-        </div>
-
-        <!-- 2. Room Join Screen -->
-        <div id="join-screen" class="screen hidden">
-            <h2 class="hud-title">เชื่อมต่อสถานีอวกาศ</h2>
-            <div class="panel" style="max-width: 400px; width: 100%;">
-                <input type="text" id="stu-nickname" placeholder="ชื่อเล่น">
-                <input type="text" id="room-code" placeholder="รหัสห้องเรียน 4 หลัก" maxlength="4" style="text-align: center; font-size: 1.5rem; letter-spacing: 5px;">
-                <button onclick="app.joinRoom()" style="width: 100%;">ACCESS SYSTEM</button>
-                <div id="join-error" class="text-red hidden" style="margin-top: 10px;"></div>
-            </div>
-        </div>
-
-        <!-- 3. Game Screen -->
-        <div id="game-screen" class="screen hidden" style="justify-content: flex-start;">
-            <div class="hud-header">
-                <div>
-                    <span class="text-cyan" id="ui-stage">STAGE 1</span> | 
-                    <span id="ui-level">LEVEL 1.1</span>
-                </div>
-                <div class="hud-stats">
-                    <div>SCORE: <span id="ui-score" class="text-neon">0</span></div>
-                    <div class="hearts" id="ui-hearts"></div>
-                </div>
-            </div>
-
-            <div class="game-grid">
-                <!-- Left Panel: Mission & Blocks -->
-                <div style="display: flex; flex-direction: column; gap: 20px;">
-                    <div class="panel">
-                        <h3 class="text-red">MISSION INCOMING</h3>
-                        <p id="mission-desc" style="margin-top: 10px; font-size: 1.1rem;"></p>
-                    </div>
-
-                    <div class="panel">
-                        <h3 class="text-cyan">COMMAND MODULE</h3>
-                        <p style="font-size: 0.8rem; color: var(--gray); margin-bottom: 10px;">แตะบล็อกแล้วแตะช่องว่าง หรือลากวาง (Drag & Drop)</p>
-                        <div class="block-area" id="block-source"></div>
-                        
-                        <div class="slot-area" id="drop-zone"></div>
-                        
-                        <div style="display: flex; gap: 10px; margin-top: 10px;">
-                            <button onclick="app.runCode()" class="btn-green" style="flex: 2;">RUN CODE</button>
-                            <button onclick="app.resetBlocks()" style="flex: 1;">RESET</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Panel: Result & Dict -->
-                <div style="display: flex; flex-direction: column; gap: 20px;">
-                    <div class="panel" style="flex: 1;">
-                        <h3 class="text-cyan">SYSTEM DATA (Dictionary)</h3>
-                        <div id="dict-display" class="dict-display"></div>
-                    </div>
-                    
-                    <div class="panel">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <h3 class="text-cyan">TERMINAL OUTPUT</h3>
-                            <button id="btn-hint" onclick="app.useHint()" style="padding: 5px 10px; font-size: 0.8rem;">HINT</button>
-                        </div>
-                        <div id="terminal-out" style="background: #000; padding: 10px; border-radius: 5px; margin-top: 10px; min-height: 60px; border: 1px solid var(--gray); color: var(--gray);">
-                            Waiting for command...
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 4. Teacher Login Screen -->
-        <div id="teacher-login-screen" class="screen hidden">
-            <h2 class="hud-title">TEACHER OVERRIDE</h2>
-            <div class="panel" style="max-width: 500px; width: 100%; text-align: left;">
-                <div class="settings-panel">
-                    <h4 class="text-red">SYSTEM CONFIGURATION</h4>
-                    <p style="font-size: 0.8rem; color: var(--gray); margin-bottom: 10px;">กรอก URL ของ Google Apps Script Web App เพื่อเปิดใช้งานระบบฐานข้อมูล</p>
-                    <input type="text" id="gas-url" placeholder="https://script.google.com/macros/s/.../exec" value="">
-                    <button onclick="app.saveGasUrl()" class="btn-green" style="width: 100%; font-size: 0.9rem;">บันทึก URL & ตรวจสอบการเชื่อมต่อ</button>
-                    <div id="gas-status" style="margin-top: 10px; font-size: 0.9rem;">สถานะ: <span class="text-red">ยังไม่ได้เชื่อมต่อ</span></div>
-                </div>
-
-                <input type="password" id="teacher-pass" placeholder="Teacher Password (ทดสอบใช้: 1234)">
-                <button onclick="app.teacherLogin()" style="width: 100%;">LOGIN</button>
-                <button onclick="app.showScreen('home-screen')" style="width: 100%; margin-top: 10px; background: transparent;">กลับหน้าหลัก</button>
-                <div id="teacher-login-error" class="text-red hidden" style="margin-top: 10px;"></div>
-            </div>
-        </div>
-
-        <!-- 5. Teacher Dashboard Screen -->
-        <div id="dashboard-screen" class="screen hidden" style="justify-content: flex-start;">
-            <div class="hud-header">
-                <h2 class="hud-title">TEACHER DASHBOARD</h2>
-                <button onclick="app.teacherLogout()" class="btn-red">LOGOUT</button>
-            </div>
-
-            <div class="panel" style="width: 100%; text-align: left; margin-bottom: 20px;">
-                <h3 class="text-cyan">Room Management</h3>
-                <div style="display: flex; gap: 10px; margin-top: 10px; align-items: center; flex-wrap: wrap;">
-                    <select id="dash-class" style="width: 150px; margin: 0;">
-                        <option value="ป.1">ป.1</option><option value="ป.2">ป.2</option><option value="ป.3">ป.3</option>
-                        <option value="ป.4">ป.4</option><option value="ป.5">ป.5</option><option value="ป.6">ป.6</option>
-                    </select>
-                    <input type="text" id="dash-room-name" placeholder="ชื่อห้อง (เช่น ป.4/1)" style="width: 200px; margin: 0;">
-                    <button onclick="app.createRoom()" class="btn-green">สร้างและเปิดห้องเรียน</button>
-                    <button onclick="app.closeRoom()" class="btn-red" id="btn-close-room" disabled>ปิดห้องเรียน / สรุปผล</button>
-                </div>
-                <div id="current-room-info" style="margin-top: 15px; font-size: 1.2rem; display: none;">
-                    รหัสห้องปัจจุบัน: <span id="dash-room-code" class="text-neon" style="font-size: 1.5rem; letter-spacing: 2px;"></span>
-                    <span id="dash-room-status" class="status-badge bg-green" style="margin-left: 10px;">OPEN</span>
-                </div>
-            </div>
-
-            <div class="panel" style="width: 100%; text-align: left; overflow-x: auto;">
-                <h3 class="text-cyan" style="display: flex; justify-content: space-between;">
-                    Student Live Status
-                    <button onclick="app.fetchDashboardData()" style="padding: 5px 10px; font-size: 0.8rem;">Refresh (API)</button>
-                </h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ชื่อ-นามสกุล</th>
-                            <th>ชั้น/เลขที่</th>
-                            <th>สถานะ</th>
-                            <th>ความคืบหน้า</th>
-                            <th>หัวใจ</th>
-                            <th>คะแนน</th>
-                            <th>จัดการ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dash-students">
-                        <!-- Data populated here -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Modals -->
-    <div id="modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2 id="modal-title" class="text-cyan"></h2>
-            <p id="modal-desc" style="margin: 20px 0;"></p>
-            <div id="modal-loader" class="loader hidden"></div>
-            <button id="modal-btn" onclick="app.closeModal()">รับทราบ</button>
-        </div>
-    </div>
-
-    <!-- Audio Synth -->
-    <script>
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playTone(freq, type, duration, vol=0.1) {
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + duration);
-        }
-        const sound = {
-            click: () => playTone(800, 'sine', 0.1),
-            drop: () => playTone(400, 'square', 0.1),
-            success: () => { playTone(523.25, 'sine', 0.1); setTimeout(()=>playTone(659.25, 'sine', 0.2), 100); setTimeout(()=>playTone(783.99, 'sine', 0.4), 200); },
-            fail: () => { playTone(150, 'sawtooth', 0.3); setTimeout(()=>playTone(100, 'sawtooth', 0.5), 200); },
-            emergency: () => { playTone(800, 'square', 0.2, 0.2); setTimeout(()=>playTone(600, 'square', 0.2, 0.2), 200); }
-        };
-    </script>
-
-    <!-- Main Game Logic -->
-    <script>
-        // --- 1. CONFIG & DATA ---
-        const CONFIG = {
-            GAS_URL: localStorage.getItem('gas_url') || "",
-            MOCK_MODE: true // Turns false when GAS_URL is set and verified
-        };
-
-        const GAME_LEVELS = [
-            // STAGE 1: ACCESS
-            { id: "1.1", stage: "ACCESS DATA", title: "Unlock the Airlock", 
-              desc: "ประตูห้องทดลองถูกล็อก เข้าถึงค่าแรงโน้มถ่วง (Gravity) จากระบบ",
-              initDict: { "Gravity": 9.8, "Oxygen_Level": 21, "Temperature": -15 },
-              blocks: ["lab_data", '["Gravity"]', '["Oxygen_Level"]', "="], slots: 2,
-              validate: (arr) => arr.join('') === 'lab_data["Gravity"]',
-              hint: "เลือกชื่อตัวแปร lab_data ตามด้วย Key [\"Gravity\"]" },
-            { id: "1.2", stage: "ACCESS DATA", title: "Oxygen Recovery", 
-              desc: "ตรวจสอบระดับออกซิเจนด่วน! เข้าถึงค่า Oxygen_Level",
-              initDict: { "Gravity": 9.8, "Oxygen_Level": 21, "Temperature": -15 },
-              blocks: ["lab_data", '["Oxygen_Level"]', '["Temperature"]'], slots: 2,
-              validate: (arr) => arr.join('') === 'lab_data["Oxygen_Level"]',
-              hint: "ใช้รูปแบบเดียวกับด่านแรก แต่เปลี่ยน Key เป็น ออกซิเจน" },
-            { id: "1.3", stage: "ACCESS DATA", title: "Emergency Code", 
-              desc: "ระบบต้องการรหัสฉุกเฉิน ดึงค่า Temperature ออกมา",
-              initDict: { "Gravity": 9.8, "Oxygen_Level": 21, "Temperature": -15 },
-              blocks: ['["Gravity"]', '["Temperature"]', "lab_data"], slots: 2,
-              validate: (arr) => arr.join('') === 'lab_data["Temperature"]',
-              hint: "หาค่าอุณหภูมิ (Temperature)" },
-            
-            // STAGE 2: MODIFY
-            { id: "2.1", stage: "MODIFY DATA", title: "Chemical Supply", 
-              desc: "เพิ่มข้อมูลสารเคมี H2O ที่มีสถานะ (State) เป็น Solid ลงใน Dictionary",
-              initDict: { "Gravity": 9.8 },
-              blocks: ["lab_data", '["H2O"]', "=", '{"State": "Solid"}', '{"State": "Liquid"}'], slots: 4,
-              validate: (arr) => arr.join('') === 'lab_data["H2O"]={"State": "Solid"}',
-              hint: "lab_data[\"H2O\"] = ... (รูปแบบ JSON ของ Solid)" },
-            { id: "2.2", stage: "MODIFY DATA", title: "Melting Protocol", 
-              desc: "แก้ไขค่า State ของ H2O จาก Solid เป็น Liquid",
-              initDict: { "Gravity": 9.8, "H2O": {"State": "Solid"} },
-              blocks: ["lab_data", '["H2O"]', '["State"]', "=", '"Liquid"'], slots: 5,
-              validate: (arr) => arr.join('') === 'lab_data["H2O"]["State"]="Liquid"',
-              hint: "เข้าถึงคีย์ซ้อนกัน lab_data[\"H2O\"][\"State\"] แล้วกำหนดค่าใหม่" },
-            { id: "2.3", stage: "MODIFY DATA", title: "Cooling System", 
-              desc: "ตั้งค่า Temperature ใหม่เป็น -50 เพื่อระบายความร้อน",
-              initDict: { "Temperature": -15, "Status": "Warning" },
-              blocks: ["lab_data", '["Temperature"]', "=", "-50", "20"], slots: 4,
-              validate: (arr) => arr.join('') === 'lab_data["Temperature"]=-50',
-              hint: "เขียนทับค่า Temperature เดิมด้วยตัวเลข -50" },
-
-            // STAGE 3: DELETE
-            { id: "3.1", stage: "DELETE DATA", title: "Toxic Leak", 
-              desc: "มีแก๊สพิษรั่วไหล! ลบ Key 'Toxic_Gas' ออกจากระบบด้วยคำสั่ง del",
-              initDict: { "Oxygen": 21, "Toxic_Gas": 100 },
-              blocks: ["del", "lab_data", '["Toxic_Gas"]', ".pop()"], slots: 3,
-              validate: (arr) => arr.join('') === 'dellab_data["Toxic_Gas"]',
-              hint: "คำสั่ง del ตามด้วยการเข้าถึง Key ที่ต้องการลบ" },
-            { id: "3.2", stage: "DELETE DATA", title: "Emergency Purge", 
-              desc: "ระบบต้องการลบ 'Error_Log' ออกและดึงค่าออกมาดู ใช้ .pop('Error_Log')",
-              initDict: { "System": "OK", "Error_Log": "Crash at 02:00" },
-              blocks: ["lab_data", ".pop(", "'Error_Log'", ")", "del"], slots: 4,
-              validate: (arr) => arr.join('') === "lab_data.pop('Error_Log')",
-              hint: "ใช้ตัวแปร ตามด้วย .pop() และระบุชื่อคีย์ในวงเล็บ" },
-            { id: "3.3", stage: "DELETE DATA", title: "Final System Recovery", 
-              desc: "ล้างไวรัส (Virus) ออกจากระบบเพื่อกอบกู้สถานี",
-              initDict: { "Gravity": 9.8, "Virus": "Active", "Shield": 100 },
-              blocks: ["del", "lab_data", '["Virus"]', "=", "0"], slots: 3,
-              validate: (arr) => arr.join('') === 'dellab_data["Virus"]',
-              hint: "ใช้คำสั่ง del เพื่อลบ Virus ออก" }
-        ];
-
-        // --- 2. APP STATE ---
-        const state = {
-            student: { name: "", class: "", no: "", nickname: "", id: "" },
-            roomCode: "",
-            session: "",
-            currentLevelIdx: 0,
-            hearts: 5,
-            hintsUsed: 0,
-            mistakes: 0,
-            startTime: null,
-            levelStartTime: null,
-            score: { "1":0, "2":0, "3":0 },
-            currentDict: {},
-            selectedBlock: null // For touch support
-        };
-
-        // --- 3. UTILITIES ---
-        const getEl = id => document.getElementById(id);
-        
-        function formatDictHtml(obj) {
-            let json = JSON.stringify(obj, null, 2);
-            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
-                let cls = 'number';
-                if (/^"/.test(match)) {
-                    if (/:$/.test(match)) { cls = 'key'; } 
-                    else { cls = 'string'; }
-                } else if (/true|false/.test(match)) { cls = 'boolean'; } 
-                else if (/null/.test(match)) { cls = 'null'; }
-                return '<span class="' + cls + '">' + match + '</span>';
-            });
-        }
-
-        function cleanNamePrefix(name) {
-            const prefixes = ['เด็กชาย', 'เด็กหญิง', 'ด.ช.', 'ด.ญ.', 'ดช', 'ดญ', 'นาย', 'นางสาว', 'นาง'];
-            let cleaned = name.trim();
-            for (let p of prefixes) {
-                if (cleaned.startsWith(p)) {
-                    cleaned = cleaned.substring(p.length).trim();
-                    break;
-                }
-            }
-            return cleaned;
-        }
-
-        // --- 4. API / BACKEND CALLS ---
-        async function gasApi(action, payload) {
-            if (!CONFIG.GAS_URL) {
-                if(CONFIG.MOCK_MODE) return mockApi(action, payload);
-                throw new Error("ระบบยังไม่ได้เชื่อมต่อ Google Apps Script");
-            }
-            try {
-                const response = await fetch(CONFIG.GAS_URL, {
-                    method: 'POST', // Use POST to avoid CORS preflight issues with simple text payload if configured right, or standard form data
-                    mode: 'cors', // Require CORS setup on GAS
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action, ...payload })
-                });
-                const result = await response.json();
-                if(result.status !== 'success') throw new Error(result.message || 'API Error');
-                return result;
-            } catch (e) {
-                console.warn("GAS API Failed, falling back to mock if allowed.", e);
-                if(CONFIG.MOCK_MODE) return mockApi(action, payload);
-                throw e;
-            }
-        }
-
-        // MOCK API for testing before GAS deployment
-        const mockDb = { rooms: {}, students: [] };
-        function mockApi(action, p) {
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    if(action === 'verifyRoom') {
-                        if(mockDb.rooms[p.code] && mockDb.rooms[p.code].status === 'OPEN') resolve({status:'success', session: p.code+'_ses'});
-                        else resolve({status:'error', message:'ไม่พบห้องเรียน หรือห้องถูกปิดแล้ว'});
-                    }
-                    else if(action === 'createRoom') {
-                        const code = Math.floor(1000 + Math.random() * 9000).toString();
-                        mockDb.rooms[code] = { class: p.class, name: p.name, status: 'OPEN' };
-                        resolve({status:'success', code: code});
-                    }
-                    else if(action === 'saveProgress') {
-                        resolve({status:'success'});
-                    }
-                    else { resolve({status:'success'}); }
-                }, 500);
-            });
-        }
-
-        // --- 5. MAIN APP CONTROLLER ---
-        const app = {
-            init: () => {
-                // Check GAS setup
-                const url = localStorage.getItem('gas_url');
-                if(url) { getEl('gas-url').value = url; getEl('gas-status').innerHTML = 'สถานะ: <span class="text-green">เชื่อมต่อแล้ว</span>'; CONFIG.MOCK_MODE = false;}
-            },
-            
-            showScreen: (screenId) => {
-                document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-                getEl(screenId).classList.remove('hidden');
-                sound.click();
-            },
-
-            showModal: (title, desc, showLoader=false, btnText="รับทราบ", onConfirm=null) => {
-                getEl('modal').classList.remove('hidden');
-                getEl('modal-title').innerText = title;
-                getEl('modal-desc').innerText = desc;
-                if(showLoader) { getEl('modal-loader').classList.remove('hidden'); getEl('modal-btn').classList.add('hidden'); }
-                else { getEl('modal-loader').classList.add('hidden'); getEl('modal-btn').classList.remove('hidden'); getEl('modal-btn').innerText = btnText; }
-                
-                getEl('modal-btn').onclick = () => {
-                    app.closeModal();
-                    if(onConfirm) onConfirm();
-                };
-            },
-            closeModal: () => getEl('modal').classList.add('hidden'),
-
-            // --- STUDENT FLOW ---
-            verifyStudentInfo: () => {
-                const rawName = getEl('stu-name').value;
-                const stuClass = getEl('stu-class').value;
-                const stuNo = getEl('stu-no').value;
-                const err = getEl('home-error');
-
-                if(!rawName || !stuClass || !stuNo) { err.innerText = "กรุณากรอกข้อมูลให้ครบถ้วน"; err.classList.remove('hidden'); return; }
-                
-                state.student.name = cleanNamePrefix(rawName);
-                state.student.class = stuClass;
-                state.student.no = stuNo;
-                state.student.id = `STU_${stuClass}_${stuNo}`; // Mock ID
-
-                err.classList.add('hidden');
-                getEl('stu-name-preview').innerText = `ชื่อที่ระบบบันทึก: ${state.student.name}`;
-                getEl('stu-name-preview').classList.remove('hidden');
-                
-                setTimeout(() => app.showScreen('join-screen'), 1500);
-            },
-
-            joinRoom: async () => {
-                state.student.nickname = getEl('stu-nickname').value;
-                state.roomCode = getEl('room-code').value;
-                const err = getEl('join-error');
-
-                if(!state.student.nickname || state.roomCode.length !== 4) { err.innerText = "ข้อมูลไม่ถูกต้อง"; err.classList.remove('hidden'); return; }
-                
-                err.classList.add('hidden');
-                app.showModal("กำลังเชื่อมต่อ...", "กำลังตรวจสอบรหัสห้องกับสถานีหลัก", true);
-
-                try {
-                    const res = await gasApi('verifyRoom', { code: state.roomCode, student: state.student });
-                    app.closeModal();
-                    state.session = res.session;
-                    app.startGame();
-                } catch(e) {
-                    app.showModal("Connection Failed", e.message || "ไม่สามารถเชื่อมต่อได้");
-                }
-            },
-
-            // --- GAME ENGINE ---
-            startGame: () => {
-                state.currentLevelIdx = 0;
-                state.score = { "1":0, "2":0, "3":0 };
-                state.startTime = Date.now();
-                app.showScreen('game-screen');
-                app.loadLevel();
-                gasApi('saveStatus', { session: state.session, studentId: state.student.id, status: 'PLAYING', level: '1.1' });
-            },
-
-            loadLevel: () => {
-                const lvl = GAME_LEVELS[state.currentLevelIdx];
-                state.hearts = 5;
-                state.hintsUsed = 0;
-                state.mistakes = 0;
-                state.currentDict = JSON.parse(JSON.stringify(lvl.initDict));
-                state.levelStartTime = Date.now();
-
-                getEl('ui-stage').innerText = lvl.stage;
-                getEl('ui-level').innerText = `LEVEL ${lvl.id}`;
-                getEl('mission-desc').innerText = lvl.desc;
-                getEl('btn-hint').disabled = false;
-                getEl('terminal-out').innerHTML = "Waiting for command...";
-                getEl('terminal-out').style.color = "var(--gray)";
-                document.body.classList.remove('emergency');
-
-                app.updateHeartsUI();
-                app.renderDict();
-                app.renderBlocks();
-            },
-
-            renderDict: () => {
-                getEl('dict-display').innerHTML = formatDictHtml(state.currentDict);
-            },
-
-            updateHeartsUI: () => {
-                let html = '';
-                for(let i=0; i<5; i++) {
-                    html += `<span class="heart ${i < state.hearts ? '' : 'empty'}">❤️</span>`;
-                }
-                getEl('ui-hearts').innerHTML = html;
-            },
-
-            renderBlocks: () => {
-                const lvl = GAME_LEVELS[state.currentLevelIdx];
-                const src = getEl('block-source');
-                const drop = getEl('drop-zone');
-                src.innerHTML = ''; drop.innerHTML = '';
-                state.selectedBlock = null;
-
-                // Shuffle blocks visually
-                let blocks = [...lvl.blocks].sort(() => Math.random() - 0.5);
-                
-                blocks.forEach((bText, i) => {
-                    const b = document.createElement('div');
-                    b.className = 'code-block';
-                    b.innerText = bText;
-                    b.draggable = true;
-                    b.id = 'block_' + i;
-                    
-                    // Drag events
-                    b.ondragstart = (e) => { e.dataTransfer.setData('text/plain', e.target.id); sound.click(); };
-                    
-                    // Touch / Click events (Fallback for mobile)
-                    b.onclick = () => {
-                        document.querySelectorAll('.code-block').forEach(el => el.classList.remove('selected'));
-                        b.classList.add('selected');
-                        state.selectedBlock = b;
-                        sound.click();
-                    };
-
-                    src.appendChild(b);
-                });
-
-                for(let i=0; i<lvl.slots; i++) {
-                    const slot = document.createElement('div');
-                    slot.className = 'drop-slot';
-                    
-                    // Drop events
-                    slot.ondragover = (e) => { e.preventDefault(); slot.classList.add('active'); };
-                    slot.ondragleave = (e) => slot.classList.remove('active');
-                    slot.ondrop = (e) => {
-                        e.preventDefault(); slot.classList.remove('active');
-                        const blockId = e.dataTransfer.getData('text/plain');
-                        const block = getEl(blockId);
-                        if(block) {
-                            if(slot.firstChild) src.appendChild(slot.firstChild); // return existing
-                            slot.appendChild(block);
-                            slot.classList.add('filled');
-                            sound.drop();
-                        }
-                    };
-
-                    // Touch / Click drop logic
-                    slot.onclick = () => {
-                        if(state.selectedBlock) {
-                            if(slot.firstChild) src.appendChild(slot.firstChild);
-                            slot.appendChild(state.selectedBlock);
-                            slot.classList.add('filled');
-                            state.selectedBlock.classList.remove('selected');
-                            state.selectedBlock = null;
-                            sound.drop();
-                        } else if(slot.firstChild) {
-                            // Click to remove
-                            src.appendChild(slot.firstChild);
-                            slot.classList.remove('filled');
-                            sound.click();
-                        }
-                    };
-
-                    drop.appendChild(slot);
-                }
-            },
-
-            resetBlocks: () => { app.renderBlocks(); sound.click(); },
-
-            useHint: () => {
-                if(state.hintsUsed > 0) return;
-                state.hintsUsed = 1;
-                getEl('btn-hint').disabled = true;
-                const lvl = GAME_LEVELS[state.currentLevelIdx];
-                app.showModal("SYSTEM HINT", lvl.hint);
-                sound.click();
-            },
-
-            runCode: () => {
-                const slots = Array.from(getEl('drop-zone').children);
-                let currentCodeArr = [];
-                let allFilled = true;
-
-                slots.forEach(s => {
-                    if(s.firstChild) currentCodeArr.push(s.firstChild.innerText);
-                    else allFilled = false;
-                });
-
-                const term = getEl('terminal-out');
-
-                if(currentCodeArr.length === 0) {
-                    term.innerText = "Error: No command provided."; term.style.color = "var(--emergency-red)";
-                    sound.fail(); return;
-                }
-
-                const lvl = GAME_LEVELS[state.currentLevelIdx];
-                const codeStr = currentCodeArr.join(' ');
-                term.innerHTML = `> <span style="color:#fff">${codeStr}</span><br>`;
-
-                if(lvl.validate(currentCodeArr)) {
-                    // Success logic
-                    term.innerHTML += `<span style="color:var(--neon-green)">Execution Successful.</span>`;
-                    sound.success();
-                    app.calculateScore();
-                    
-                    // Simulate dict update visually based on level logic (hardcoded visual update for safety over eval)
-                    if(lvl.id === "2.1") state.currentDict["H2O"] = {"State": "Solid"};
-                    if(lvl.id === "2.2") state.currentDict["H2O"]["State"] = "Liquid";
-                    if(lvl.id === "2.3") state.currentDict["Temperature"] = -50;
-                    if(lvl.id === "3.1") delete state.currentDict["Toxic_Gas"];
-                    if(lvl.id === "3.2") delete state.currentDict["Error_Log"];
-                    if(lvl.id === "3.3") delete state.currentDict["Virus"];
-                    app.renderDict();
-
-                    setTimeout(app.levelComplete, 1500);
-                } else {
-                    // Fail logic
-                    state.hearts--;
-                    state.mistakes++;
-                    app.updateHeartsUI();
-                    term.innerHTML += `<span style="color:var(--emergency-red)">SyntaxError or Invalid Command. Access Denied.</span>`;
-                    sound.fail();
-
-                    if(state.hearts <= 0) {
-                        document.body.classList.add('emergency');
-                        sound.emergency();
-                        setTimeout(() => {
-                            app.showModal("SYSTEM FAILURE", "หัวใจหมด! ระบบกำลังเริ่มต้น Level ปัจจุบันใหม่...", false, "REBOOT", () => {
-                                app.loadLevel();
-                            });
-                        }, 500);
-                    }
-                }
-            },
-
-            calculateScore: () => {
-                // Base 1000 per level. Deduct for time (>30s), mistakes, hints
-                const timeUsed = (Date.now() - state.levelStartTime) / 1000;
-                let pts = 1000 - (state.mistakes * 200) - (state.hintsUsed * 300);
-                if(timeUsed > 60) pts -= 200;
-                else if(timeUsed > 30) pts -= 100;
-                if(pts < 100) pts = 100; // Min score
-
-                const stageId = GAME_LEVELS[state.currentLevelIdx].id.charAt(0);
-                state.score[stageId] += pts;
-                
-                let total = state.score["1"] + state.score["2"] + state.score["3"];
-                getEl('ui-score').innerText = total;
-
-                // Fire & forget save
-                gasApi('saveScore', { session: state.session, studentId: state.student.id, score: state.score });
-            },
-
-            levelComplete: () => {
-                state.currentLevelIdx++;
-                if(state.currentLevelIdx >= GAME_LEVELS.length) {
-                    app.gameComplete();
-                } else {
-                    const next = GAME_LEVELS[state.currentLevelIdx];
-                    app.showModal("SECTOR CLEARED", `กู้คืนระบบสำเร็จ\nเตรียมเข้าสู่: ${next.stage} - Level ${next.id}`, false, "NEXT LEVEL", () => {
-                        app.loadLevel();
-                    });
-                }
-            },
-
-            gameComplete: async () => {
-                sound.success();
-                let total = state.score["1"] + state.score["2"] + state.score["3"];
-                app.showModal("MISSION COMPLETE!", `คุณกอบกู้สถานีอวกาศสำเร็จ!\nคะแนนรวม: ${total}`, true);
-                
-                try {
-                    await gasApi('endGame', { session: state.session, studentId: state.student.id, score: state.score });
-                    app.closeModal();
-                    app.showScreen('home-screen'); // Or leaderboard
-                    alert("บันทึกข้อมูลลงระบบเรียบร้อย");
-                } catch(e) {
-                    app.showModal("Warning", "บันทึกข้อมูลไม่สำเร็จ กรุณาแจ้งครูผู้สอน");
-                }
-            },
-
-            // --- TEACHER FLOW ---
-            saveGasUrl: () => {
-                const url = getEl('gas-url').value.trim();
-                if(url.startsWith('https://script.google.com/')) {
-                    localStorage.setItem('gas_url', url);
-                    CONFIG.GAS_URL = url;
-                    CONFIG.MOCK_MODE = false;
-                    getEl('gas-status').innerHTML = 'สถานะ: <span class="text-green">เชื่อมต่อแล้ว (URL Saved)</span>';
-                } else {
-                    getEl('gas-status').innerHTML = 'สถานะ: <span class="text-red">URL ไม่ถูกต้อง</span>';
-                }
-            },
-
-            teacherLogin: async () => {
-                const pass = getEl('teacher-pass').value;
-                const err = getEl('teacher-login-error');
-                
-                // Note: In real app, password should not be checked client side. 
-                // We send to backend, if backend fails, it rejects.
-                app.showModal("Authenticating...", "", true);
-                try {
-                    const res = await gasApi('teacherLogin', { password: pass });
-                    app.closeModal();
-                    app.showScreen('dashboard-screen');
-                } catch(e) {
-                    app.closeModal();
-                    err.innerText = e.message || "รหัสผ่านผิด หรือ ไม่สามารถเชื่อมต่อฐานข้อมูลได้";
-                    err.classList.remove('hidden');
-                }
-            },
-
-            teacherLogout: () => {
-                app.showScreen('home-screen');
-            },
-
-            createRoom: async () => {
-                const cls = getEl('dash-class').value;
-                const name = getEl('dash-room-name').value;
-                if(!name) return alert("กรุณาตั้งชื่อห้อง");
-
-                app.showModal("กำลังสร้างห้อง...", "", true);
-                try {
-                    const res = await gasApi('createRoom', { class: cls, name: name });
-                    app.closeModal();
-                    getEl('current-room-info').style.display = 'block';
-                    getEl('dash-room-code').innerText = res.code;
-                    state.session = res.code; // teacher's active session
-                    getEl('btn-close-room').disabled = false;
-                    app.fetchDashboardData();
-                } catch(e) {
-                    app.showModal("Error", e.message);
-                }
-            },
-
-            closeRoom: async () => {
-                if(!confirm("ยืนยันการปิดห้องเรียนและสรุปผล?")) return;
-                app.showModal("กำลังปิดห้องและสรุปผล...", "", true);
-                try {
-                    await gasApi('closeRoom', { code: state.session });
-                    app.closeModal();
-                    getEl('dash-room-status').innerText = 'CLOSED';
-                    getEl('dash-room-status').className = 'status-badge bg-red';
-                    getEl('btn-close-room').disabled = true;
-                    alert("ปิดห้องและสรุปผลลง Google Sheets สำเร็จ");
-                } catch(e) {
-                    app.showModal("Error", e.message);
-                }
-            },
-
-            fetchDashboardData: async () => {
-                if(!state.session) return;
-                try {
-                    const res = await gasApi('getDashboard', { session: state.session });
-                    const tbody = getEl('dash-students');
-                    tbody.innerHTML = '';
-                    if(res.data && res.data.length > 0) {
-                        res.data.forEach(s => {
-                            const tr = document.createElement('tr');
-                            tr.innerHTML = `
-                                <td>${s.name} (${s.nickname})</td>
-                                <td>${s.class} / ${s.no}</td>
-                                <td><span class="status-badge ${s.status === 'PLAYING' ? 'bg-green' : 'bg-gray'}">${s.status}</span></td>
-                                <td>LV ${s.level}</td>
-                                <td>${s.hearts || 5} ❤️</td>
-                                <td>${s.score || 0}</td>
-                                <td><button onclick="app.sendHint('${s.id}')" style="padding: 2px 5px; font-size:0.7rem;">Help</button></td>
-                            `;
-                            tbody.appendChild(tr);
-                        });
-                    } else {
-                        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--gray);">ยังไม่มีนักเรียนเข้าร่วม</td></tr>';
-                    }
-                } catch(e) {
-                    console.error("Dashboard update failed", e);
-                }
-            },
-
-            sendHint: (studentId) => {
-                alert(`ส่งความช่วยเหลือไปยังระบบของนักเรียน ID: ${studentId} แล้ว (Simulation)`);
-                gasApi('sendHint', { session: state.session, studentId: studentId });
-            }
-        };
-
-        // Init
-        window.onload = app.init;
-
-        // Prevent accident refresh
-        window.onbeforeunload = function() {
-            if(!getEl('game-screen').classList.contains('hidden')) {
-                return "คุณกำลังอยู่ในภารกิจ ข้อมูลอาจไม่ถูกบันทึกหากออกตอนนี้!";
-            }
-        }
-    </script>
-</body>
-</html>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SCI-LAB: SPACE LAB EMERGENCY</title>
+<style>
+:root{--bg:#07111F;--bg2:#0B1F3A;--blue:#00C8FF;--cy:#63F5FF;--red:#FF334F;--grn:#4DFFB5;--w:#F3F8FF}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%}
+body{font-family:'Noto Sans Thai','Sarabun',Tahoma,system-ui,sans-serif;color:var(--w);background:radial-gradient(ellipse at 50% 0,#0B1F3A,#07111F 70%) fixed;overflow-x:hidden;line-height:1.5}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(0,200,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,.07) 1px,transparent 1px);background-size:32px 32px}
+body.alert:after{content:"";position:fixed;inset:0;pointer-events:none;box-shadow:inset 0 0 90px rgba(255,51,79,.55);animation:pulse 1s infinite alternate}
+@keyframes pulse{to{opacity:.25}}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.shake{animation:shake .3s}
+header{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(7,17,31,.85);border-bottom:1px solid rgba(0,200,255,.3)}
+.logo{font-weight:800;letter-spacing:.06em;color:var(--cy)}
+.ib{background:none;border:1px solid #2b3a4f;color:#9aa7b8;border-radius:50%;width:40px;height:40px;font-size:20px;cursor:pointer}
+main{position:relative;max-width:960px;margin:0 auto;padding:12px}
+.card{background:rgba(11,31,58,.85);border:1px solid rgba(0,200,255,.35);box-shadow:0 0 18px rgba(0,200,255,.12);border-radius:14px;padding:14px;margin:10px 0;animation:pop .35s}
+h1,h2,h3{margin:.2em 0}h1{color:var(--cy);text-shadow:0 0 14px var(--blue)}
+.tag{color:var(--red);font-weight:700}
+label{display:block;margin:10px 0 4px;font-weight:600}
+input,select,textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #2d4e7a;background:#07111F;color:var(--w);font:inherit;font-size:16px}
+button{font:inherit;cursor:pointer}
+.btn{min-height:44px;padding:10px 18px;border-radius:10px;border:1px solid var(--blue);background:linear-gradient(#0d3a66,#0B1F3A);color:var(--w);font-weight:700}
+.btn.go{background:linear-gradient(#0aa,#067);border-color:var(--grn)}.btn.bad{border-color:var(--red);background:#3a0d18}.btn.sm{min-height:36px;padding:4px 10px;font-size:14px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--grn);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>*{flex:1 1 auto}
+.err{color:#ff8fa0;min-height:1.3em}.ok{color:var(--grn)}.mut{color:#9db3cc;font-size:14px}
+.hud{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;font-weight:700}
+.bar{display:flex;gap:4px;margin-top:8px}.bar i{flex:1;height:8px;border-radius:4px;background:#1b2f4a}.bar i.d{background:var(--grn)}.bar i.c{background:var(--blue)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:700px){.two{grid-template-columns:1fr}}
+pre{margin:6px 0 0;padding:10px;background:#050c16;border-radius:8px;border:1px solid #1d3552;white-space:pre-wrap;word-break:break-word;font:14px/1.5 ui-monospace,Consolas,monospace;color:var(--cy)}
+.tok,.chip{display:inline-block;margin:4px;padding:10px 12px;min-height:44px;border-radius:10px;border:1px solid var(--blue);background:#0d2a4d;color:var(--w);font:15px ui-monospace,Consolas,monospace;touch-action:none;user-select:none}
+.chip{touch-action:auto;border-color:var(--grn)}.chip.nl{display:block;width:100%;text-align:center;border-style:dashed;color:#9db3cc}
+.ghost{position:fixed;z-index:99;pointer-events:none;transform:translate(-50%,-50%);opacity:.85}
+#code{min-height:84px;border:2px dashed var(--blue)}#code.over{background:#0b3a55;border-color:var(--grn)}
+.pass{color:var(--grn)}.fail{color:var(--red)}
+#modal{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.7);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:10px}
+#modal>div{width:100%;max-width:760px;background:#07111F;border:1px solid var(--blue);border-radius:14px;padding:14px}
+.overlay{position:fixed;inset:0;z-index:15;background:rgba(40,0,10,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
+.stu{border-left:4px solid var(--blue)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<header><button class="ib" id="tBtn" aria-label="เข้าสู่ระบบครู" title="ครู">&#128100;</button><span class="logo">SCI-LAB</span><button class="ib" id="snd" aria-label="เปิด/ปิดเสียง">&#128266;</button></header>
+<main id="app"></main>
+<div id="modal" role="dialog" aria-modal="true"><div id="mbody"></div></div>
+<script>
+/* ============ ตั้งค่า: วาง URL Web App ของ Google Apps Script ที่นี่ (หรือกรอกในหน้าครู) ============ */
+const API_URL='';
+/*CORE*/
+/* ---------- ตัดคำนำหน้าชื่อ ---------- */
+const TITLES=['เด็กชาย','เด็กหญิง','นางสาว','นาย','นาง','ด.ช.','ด.ญ.','ดช','ดญ'];
+function splitName(raw){let s=String(raw||'').trim(),p='';for(const t of TITLES){if(s.startsWith(t)){p=t;s=s.slice(t.length).replace(/^[\s.]+/,'').trim();break}}return{prefix:p,name:s}}
+/* ---------- Python Dictionary Simulator (ไม่ใช้ eval / new Function) ---------- */
+const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
+const isD=v=>v!==null&&typeof v==='object';
+const clone=v=>JSON.parse(JSON.stringify(v));
+function sortK(v){if(!isD(v))return v;const o={};Object.keys(v).sort().forEach(k=>o[k]=sortK(v[k]));return o}
+const eq=(a,b)=>JSON.stringify(sortK(a))===JSON.stringify(sortK(b));
+function repr(v){if(typeof v==='string')return"'"+v+"'";if(isD(v))return'{'+Object.keys(v).map(k=>"'"+k+"': "+repr(v[k])).join(', ')+'}';return String(v)}
+function tokenize(src){const T=[],re=/\s*(?:("[^"\n]*")|(-?\d+(?:\.\d+)?)|([A-Za-z_]\w*)|([\[\]{}().,:=+]))/y;let p=0;
+ while(!/^\s*$/.test(src.slice(p))){re.lastIndex=p;const m=re.exec(src);if(!m)throw new Error('SyntaxError: พบสัญลักษณ์ที่ไม่รู้จัก');p=re.lastIndex;
+  if(m[1]!==undefined)T.push({t:'s',v:m[1].slice(1,-1)});else if(m[2]!==undefined)T.push({t:'n',v:parseFloat(m[2])});else if(m[3]!==undefined)T.push({t:'i',v:m[3]});else T.push({t:'p',v:m[4]})}
+ return T}
+function runLine(src,env){const T=tokenize(src);let i=0;const E=m=>{throw new Error(m)};
+ const P=v=>T[i]&&T[i].t==='p'&&T[i].v===v;
+ const need=v=>{if(!P(v))E('SyntaxError: ต้องมี "'+v+'"');i++};
+ const str=()=>{const k=T[i++];if(!k||k.t!=='s')E('SyntaxError: Key ต้องเป็นข้อความใน "..."');return k.v};
+ const path=()=>{const n=T[i++];if(!n||n.t!=='i')E('SyntaxError: ต้องขึ้นต้นด้วยชื่อตัวแปร');if(n.v!=='lab_data')E("NameError: ไม่รู้จัก '"+n.v+"'");const ks=[];while(P('[')){i++;ks.push(str());need(']')}return ks};
+ const walk=ks=>{let c=env.lab_data;for(const k of ks){if(!isD(c))E('TypeError: ค่านี้ไม่ใช่ Dictionary จึงใช้ ["'+k+'"] ไม่ได้');if(!own(c,k))E("KeyError: ไม่พบ Key '"+k+"'");c=c[k]}return c};
+ const dict=()=>{need('{');const o={};while(!P('}')){const k=str();need(':');o[k]=val();if(P(','))i++;else break}need('}');return o};
+ const atom=()=>{const t=T[i];if(!t)E('SyntaxError: คำสั่งยังไม่สมบูรณ์');if(t.t==='s'||t.t==='n'){i++;return t.v}if(P('{'))return dict();return walk(path())};
+ const val=()=>{let a=atom();while(P('+')){i++;const b=atom();if(typeof a==='number'&&typeof b==='number')a=Math.round((a+b)*1e9)/1e9;else if(typeof a==='string'&&typeof b==='string')a+=b;else E('TypeError: บวกข้อมูลคนละชนิดกันไม่ได้')}return a};
+ const parent=ks=>{const par=walk(ks);if(!isD(par))E('TypeError: ค่านี้ไม่ใช่ Dictionary');return par};
+ let out;const t0=T[0];if(!t0)E('SyntaxError: ยังไม่มีคำสั่ง');
+ if(t0.t==='i'&&t0.v==='del'){i++;const ks=path();if(!ks.length)E('SyntaxError: del ต้องระบุ Key');const last=ks.pop(),par=parent(ks);if(!own(par,last))E("KeyError: ไม่พบ Key '"+last+"'");delete par[last]}
+ else if(t0.t==='i'&&t0.v==='lab_data'){const save=i,ks=path();
+  if(P('=')){i++;if(!ks.length)E('SyntaxError: ต้องระบุ Key ที่จะกำหนดค่า');const v=val(),last=ks.pop();parent(ks)[last]=v}
+  else if(P('.')){i++;const m=T[i++];if(!m||m.v!=='pop')E('AttributeError: รองรับเฉพาะ .pop()');need('(');const k=str();need(')');const par=parent(ks);if(!own(par,k))E("KeyError: ไม่พบ Key '"+k+"'");out=par[k];delete par[k]}
+  else{i=save;out=val()}}
+ else if(t0.t==='s'||t0.t==='n'||P('{'))out=val();else E('SyntaxError: คำสั่งไม่ถูกต้อง');
+ if(i<T.length)E('SyntaxError: มีส่วนเกินท้ายคำสั่ง');return out}
+function runProgram(code,d){const env={lab_data:clone(d)};let out;const lines=String(code).split('\n').map(s=>s.trim()).filter(Boolean);
+ if(!lines.length)return{ok:false,error:'ยังไม่ได้วางคำสั่ง',env,out};
+ for(const ln of lines){try{const o=runLine(ln,env);if(o!==undefined)out=o}catch(e){return{ok:false,error:e.message,env,out}}}
+ return{ok:true,env,out}}
+/* ---------- ด่านทั้ง 9 (ตรวจจากสถานะ Dictionary + ผลลัพธ์ ไม่ใช่ข้อความบนจอ) ---------- */
+const BASE={Gravity:9.8,Oxygen_Level:21,Temperature:-15};
+const W=(o)=>Object.assign(clone(BASE),o);
+const LV=[
+{n:'Unlock the Airlock',s:'ประตูห้องทดลองถูกล็อก! อ่านค่า Gravity จาก lab_data เพื่อปลดล็อก',d:BASE,tok:['lab_data','["Gravity"]','["Oxygen_Level"]','["Temperature"]','=','del'],ok:r=>r.out===9.8,h:'เขียนชื่อ Dictionary แล้วตามด้วย Key ในวงเล็บเหลี่ยม [ ]'},
+{n:'Oxygen Recovery',s:'ตรวจระดับออกซิเจน: อ่านค่า Oxygen_Level',d:BASE,tok:['lab_data','["Gravity"]','["Oxygen_Level"]','["Temperature"]','=','+'],ok:r=>r.out===21,h:'Key เขียนในเครื่องหมายคำพูดและวงเล็บเหลี่ยมเสมอ'},
+{n:'Emergency Code',s:'รหัสปลดล็อก = Oxygen_Level + Gravity อ่านค่าทั้งสองแล้วบวกกัน',d:BASE,tok:['lab_data','["Gravity"]','["Oxygen_Level"]','["Temperature"]','+','='],ok:r=>r.out===30.8,h:'อ่านค่าหนึ่งตัว ใส่ + แล้วอ่านอีกตัว (ต้องใช้ lab_data สองครั้ง)'},
+{n:'Chemical Supply',s:'เพิ่มสารเคมี H2O ลง lab_data โดยมี State เป็น "Solid"',d:BASE,tok:['lab_data','["H2O"]','["State"]','=','{"State": "Solid"}','"Solid"','"Liquid"','del'],ok:r=>r.ok&&eq(r.env.lab_data,W({H2O:{State:'Solid'}})),h:'Key ใหม่ใช้รูปแบบ ตัวแปร["Key"] = ค่า และค่าเป็น Dictionary ซ้อนได้'},
+{n:'Melting Protocol',s:'H2O กำลังละลาย: แก้ State จาก "Solid" เป็น "Liquid"',d:W({H2O:{State:'Solid'}}),tok:['lab_data','["H2O"]','["State"]','=','"Liquid"','"Solid"','["Gravity"]'],ok:r=>r.ok&&eq(r.env.lab_data,W({H2O:{State:'Liquid'}})),h:'เข้าถึงทีละชั้น: ["H2O"] แล้วตามด้วย ["State"] ก่อนใช้ ='},
+{n:'Cooling System',s:'ระบบทำความเย็นต้องตั้ง Temperature เป็น -20',d:BASE,tok:['lab_data','["Temperature"]','["Gravity"]','=','-20','20','-15'],ok:r=>r.ok&&eq(r.env.lab_data,W({Temperature:-20})),h:'Key ที่มีอยู่แล้ว เมื่อใช้ = จะถูกแก้เป็นค่าใหม่'},
+{n:'Toxic Leak',s:'แก๊สพิษรั่ว! ลบ Key Toxic_Gas ออกจาก lab_data',d:W({Toxic_Gas:5}),tok:['del','lab_data','["Toxic_Gas"]','["Gravity"]','='],ok:r=>r.ok&&eq(r.env.lab_data,BASE),h:'del ตามด้วยตัวแปรและ Key ที่ต้องการลบ'},
+{n:'Emergency Purge',s:'ลบ Leak_Pressure ออก และต้องได้ค่าที่ลบกลับมาแสดงด้วย (ต้องได้ 80)',d:W({Toxic_Gas:5,Leak_Pressure:80}),tok:['del','lab_data','["Leak_Pressure"]','.pop("Leak_Pressure")','.pop("Toxic_Gas")','["Toxic_Gas"]'],ok:r=>r.ok&&r.out===80&&eq(r.env.lab_data,W({Toxic_Gas:5})),h:'del ลบเฉย ๆ ไม่ส่งค่ากลับ ส่วน .pop() ลบและส่งค่าที่ลบกลับมา'},
+{n:'Final System Recovery',s:'กอบกู้สถานี: ลบ Toxic_Gas และเปลี่ยน H2O State เป็น "Liquid" (2 บรรทัด ใช้ปุ่มขึ้นบรรทัดใหม่)',d:W({Toxic_Gas:5,H2O:{State:'Solid'}}),tok:['del','lab_data','["Toxic_Gas"]','["H2O"]','["State"]','=','"Liquid"','NL'],ok:r=>r.ok&&eq(r.env.lab_data,W({H2O:{State:'Liquid'}})),h:'ทำทีละบรรทัด: บรรทัดแรกลบ Toxic_Gas, ขึ้นบรรทัดใหม่, บรรทัดสองแก้ State'}
+];
+const MAINS=['ACCESS DATA','MODIFY DATA','DELETE DATA'];
+const lvScore=(wrong,hint)=>Math.max(20,Math.min(100,100-10*wrong-(hint?20:0)));
+/*ENDCORE*/
+/*TESTS*/
+function runTests(){const R=[],t=(n,f)=>{try{R.push([n,!!f()])}catch(e){R.push([n+' (exception)',false])}},run=(c,d=BASE)=>runProgram(c,d);
+const SOL=['lab_data["Gravity"]','lab_data["Oxygen_Level"]','lab_data["Oxygen_Level"] + lab_data["Gravity"]','lab_data["H2O"] = {"State": "Solid"}','lab_data["H2O"]["State"] = "Liquid"','lab_data["Temperature"] = -20','del lab_data["Toxic_Gas"]','lab_data.pop("Leak_Pressure")','del lab_data["Toxic_Gas"]\nlab_data["H2O"]["State"] = "Liquid"'];
+t('read',()=>run('lab_data["Gravity"]').out===9.8);t('add',()=>run('lab_data["Oxygen_Level"] + lab_data["Gravity"]').out===30.8);
+t('set',()=>eq(run('lab_data["H2O"] = {"State": "Solid"}').env.lab_data.H2O,{State:'Solid'}));
+t('nested',()=>run('lab_data["H2O"]["State"] = "Liquid"',LV[4].d).env.lab_data.H2O.State==='Liquid');
+t('del',()=>!own(run('del lab_data["Gravity"]').env.lab_data,'Gravity'));
+t('pop',()=>{const r=run('lab_data.pop("Gravity")');return r.out===9.8&&!own(r.env.lab_data,'Gravity')});
+t('KeyError',()=>/KeyError/.test(run('lab_data["X"]').error));t('TypeError',()=>/TypeError/.test(run('lab_data["Gravity"]["a"]').error));
+t('syntax',()=>!run('lab_data[Gravity]').ok);t('no JS',()=>!run('alert(1)').ok&&!run('lab_data["a"];alert(1)').ok&&!run('constructor.constructor("1")()').ok);
+t('input not mutated',()=>{run('del lab_data["Gravity"]');return BASE.Gravity===9.8});
+t('names',()=>['เด็กชาย สมชาย ใจดี','ด.ช. สมชาย ใจดี','นายสมชาย ใจดี'].every(x=>splitName(x).name==='สมชาย ใจดี')&&splitName('นางสาว มาลี ใจดี').name==='มาลี ใจดี'&&splitName('สมนาย ใจดี').name==='สมนาย ใจดี');
+LV.forEach((l,i)=>{t('L'+(i+1)+' correct passes',()=>{const r=runProgram(SOL[i],l.d);return r.ok&&l.ok(r)});t('L'+(i+1)+' empty fails',()=>{const r=runProgram('',l.d);return !(r.ok&&l.ok(r))})});
+t('L8 del alone fails',()=>{const r=runProgram('del lab_data["Leak_Pressure"]',LV[7].d);return !LV[7].ok(r)});
+return R}
+/*ENDTESTS*/
+/* ================= UI ================= */
+const $=s=>document.querySelector(s),root=$('#app');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const apiUrl=()=>(localStorage.getItem('scilab_api')||API_URL||'').trim();
+let tk=sessionStorage.getItem('tk')||'',S=null,tick=null,poll=null;const TAB=Math.random().toString(36).slice(2);
+async function api(action,data={}){const u=apiUrl();if(!u)return{ok:false,error:'NOAPI'};const c=new AbortController(),t=setTimeout(()=>c.abort(),15000);
+ try{const r=await fetch(u,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,tk,...data}),signal:c.signal});return await r.json()}catch(e){return{ok:false,error:'NET'}}finally{clearTimeout(t)}}
+const errTxt=r=>r.error==='NOAPI'?'ยังไม่ได้เชื่อมต่อระบบหลังบ้าน (Google Apps Script)':r.error==='NET'?'เชื่อมต่อไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่':(r.error||'เกิดข้อผิดพลาด');
+/* ---------- เสียง (Web Audio สร้างหลังผู้ใช้กดครั้งแรก) ---------- */
+let AC=null,mute=false;$('#snd').onclick=()=>{mute=!mute;$('#snd').innerHTML=mute?'&#128263;':'&#128266;'};
+function sfx(k){if(mute)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const seq={ok:[660,880],bad:[200,150],click:[500],pass:[523,659,784],over:[300,200,120],end:[523,659,784,1046],warn:[400,300]}[k]||[500];
+ seq.forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;o.type=k==='bad'||k==='over'?'sawtooth':'sine';g.gain.value=.07;o.connect(g);g.connect(AC.destination);const t=AC.currentTime+i*.12;o.start(t);o.stop(t+.11)})}catch(e){}}
+document.addEventListener('click',e=>{if(e.target.closest('.btn'))sfx('click')});
+const fmt=s=>{s=Math.max(0,Math.round(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+/* ---------- หน้าแรก ---------- */
+function home(){clearInterval(tick);clearInterval(poll);document.body.classList.remove('alert');
+ const has=!!apiUrl();
+ root.innerHTML=`<div class="card"><h1>SCI-LAB: SPACE LAB EMERGENCY</h1><p class="tag">SYSTEM FAILURE DETECTED — SAVE THE SPACE LAB!</p>
+ <p>คุณคือนักวิทยาศาสตร์ฝึกหัดประจำสถานี SCI-LAB ใช้ความรู้เรื่อง Python Dictionary แก้ระบบและกอบกู้สถานีให้สำเร็จ</p>
+ <p class="mut">ระบบหลังบ้าน: ${has?'ตั้งค่า URL แล้ว (ตรวจสอบจริงเมื่อเข้าห้อง)':'<b class="fail">ยังไม่ได้เชื่อมต่อ</b> — เข้าห้องเรียนไม่ได้ ครูต้องตั้งค่าก่อน'}</p>
+ <label for="nm">ชื่อ-นามสกุล (ไม่ต้องใส่คำนำหน้า)</label><input id="nm" autocomplete="off" placeholder="เช่น สมชาย ใจดี">
+ <p class="ok" id="pv" aria-live="polite"></p>
+ <div class="row"><div><label for="cls">ชั้นเรียน</label><select id="cls"><option value="">เลือกชั้น</option>${[1,2,3,4,5,6].map(n=>`<option>ป.${n}</option>`).join('')}</select></div>
+ <div><label for="no">เลขที่</label><input id="no" type="number" min="1" max="99" inputmode="numeric"></div></div>
+ <p class="err" id="e1" role="alert"></p><button class="btn go" id="n1">ตรวจสอบและไปต่อ</button></div>`;
+ const pv=()=>{const r=splitName($('#nm').value);$('#pv').textContent=r.name?'ชื่อที่ระบบอ่านได้: '+r.name+(r.prefix?' (ตัดคำนำหน้า "'+r.prefix+'" แล้ว)':''):''};
+ $('#nm').oninput=pv;
+ $('#n1').onclick=()=>{const r=splitName($('#nm').value),cls=$('#cls').value,no=parseInt($('#no').value,10);let e='';
+  if(r.name.length<3||!/\S\s+\S/.test(r.name))e='กรอกทั้งชื่อและนามสกุล เว้นวรรคระหว่างกัน';else if(!cls)e='เลือกชั้นเรียน';else if(!(no>=1&&no<=99))e='เลขที่ต้องเป็น 1–99';
+  $('#e1').textContent=e;if(!e)step2({name:r.name,prefix:r.prefix,cls,no})}}
+function step2(p){root.innerHTML=`<div class="card"><h2>ยืนยันตัวตน</h2><p>ชื่อ: <b>${esc(p.name)}</b> · ${esc(p.cls)} · เลขที่ ${p.no}</p>
+ <label for="nk">ชื่อเล่น</label><input id="nk" maxlength="20" autocomplete="off"><label for="cd">รหัสห้องเรียน 4 หลัก</label><input id="cd" inputmode="numeric" maxlength="4" pattern="\\d{4}">
+ <p class="err" id="e2" role="alert"></p><div class="row"><button class="btn" id="bk">กลับไปแก้</button><button class="btn go" id="jn">เข้าห้องเรียน</button></div>
+ <hr><p class="mut">ไม่มีรหัสห้อง? ฝึกเล่นได้ แต่<b>จะไม่ถูกบันทึกคะแนน</b>และไม่ใช่การเข้าห้องเรียน</p><button class="btn sm" id="pr">ฝึกเล่น (ไม่บันทึก)</button></div>`;
+ $('#bk').onclick=home;
+ $('#pr').onclick=()=>{const nk=$('#nk').value.trim();if(!nk)return $('#e2').textContent='กรอกชื่อเล่นก่อน';startGame({...p,nick:nk},null,'practice')};
+ $('#jn').onclick=async()=>{const nk=$('#nk').value.trim(),cd=$('#cd').value.trim();if(!nk)return $('#e2').textContent='กรอกชื่อเล่น';if(!/^\d{4}$/.test(cd))return $('#e2').textContent='รหัสห้องต้องเป็นตัวเลข 4 หลัก';
+  $('#jn').disabled=true;$('#e2').textContent='กำลังตรวจสอบกับระบบ...';const old=JSON.parse(localStorage.getItem('scilab_state')||'null');
+  const r=await api('join',{code:cd,name:p.name,prefix:p.prefix,cls:p.cls,no:p.no,nick:nk,pid:old&&old.pid&&old.name===p.name?old.pid:''});$('#jn').disabled=false;
+  if(!r.ok)return $('#e2').innerHTML=esc(errTxt(r))+(r.error==='NET'?' <button class="btn sm" id="rt">ลองใหม่</button>':'');
+  startGame({...p,nick:nk},r,'online')}}
+/* ---------- เกม ---------- */
+function save(){if(S)localStorage.setItem('scilab_state',JSON.stringify({...S,tab:TAB}))}
+addEventListener('storage',e=>{if(e.key==='scilab_state'&&e.newValue&&S&&JSON.parse(e.newValue).tab!==TAB){clearInterval(tick);clearInterval(poll);root.innerHTML='<div class="card"><h2 class="fail">เปิดเกมซ้ำหลายแท็บ</h2><p>มีแท็บอื่นกำลังเล่นอยู่ ปิดแท็บนี้แล้วเล่นในแท็บเดียว</p></div>';S=null}});
+function startGame(p,r,mode){const old=JSON.parse(localStorage.getItem('scilab_state')||'null');
+ if(mode==='online'&&r.resumed&&old&&old.sid===r.session&&old.pid===r.pid)S=old;
+ else S={mode,p,pid:r?r.pid:'',sid:r?r.session:'',lvl:0,hearts:5,wrong:0,hint:false,scores:[],wrongTotal:0,hints:0,t0:Date.now(),tokens:[],saved:false,done:false,msg:'',lastHint:''};
+ S.p=p;save();if(mode==='online'){sync(false);poll=setInterval(()=>S&&!S.done&&sync(false),10000)}play()}
+async function sync(done){if(!S||S.mode!=='online')return;const r=await api('progress',{pid:S.pid,level:S.lvl+1,hearts:S.hearts,scores:S.scores,wrong:S.wrongTotal,hints:S.hints,done:!!done});
+ S.saved=!!r.ok;if(r.ok&&r.hint&&r.hint!==S.lastHint){S.lastHint=r.hint;S.msg='ข้อความจากครู: '+r.hint;const b=$('#hb');if(b)b.textContent=S.msg}if(!r.ok)S.syncErr=errTxt(r);save();const ss=$('#ss');if(ss)ss.textContent=S.saved?'บันทึกกับระบบแล้ว':'ยังไม่ได้บันทึก: '+(S.syncErr||'')}
+const total=()=>S.scores.reduce((a,b)=>a+b,0);
+function play(){clearInterval(tick);const L=LV[S.lvl],m=Math.floor(S.lvl/3);document.body.classList.toggle('alert',S.hearts<=1);
+ root.innerHTML=`<div class="card hud"><span id="hr" aria-label="หัวใจ">${'&#10084;&#65039;'.repeat(S.hearts)}${'&#128420;'.repeat(5-S.hearts)}</span><span>LV ${m+1}.${S.lvl%3+1}</span><span>คะแนน ${total()}</span><span>คำใบ้ ${S.hint?1:0}/1</span><span id="tm">&#9201; 00:00</span>
+ <div class="bar" style="flex-basis:100%">${LV.map((_,i)=>`<i class="${i<S.lvl?'d':i===S.lvl?'c':''}"></i>`).join('')}</div></div>
+ <div class="card"><h2>ด่าน ${m+1}: ${MAINS[m]} — ${esc(L.n)}</h2><p>${esc(L.s)}</p><p class="mut">กติกา: ผิด 1 ครั้งเสีย 1 หัวใจ · คะแนนด่านละ 100 หัก 10/ครั้งที่ผิด หัก 20 ถ้าใช้คำใบ้ (ต่ำสุด 20) · เวลาใช้จัดอันดับเมื่อคะแนนเท่ากัน</p></div>
+ <div class="two"><div class="card"><b>Dictionary ปัจจุบัน</b><pre id="dv">lab_data = ${esc(repr(L.d))}</pre></div><div class="card"><b>คำสั่ง Python</b> <span class="mut">(ลากไปวาง หรือแตะเพื่อเพิ่ม)</span><div id="pal"></div></div></div>
+ <div class="card" id="code" aria-label="พื้นที่วางคำสั่ง"></div>
+ <div class="row"><button class="btn" id="run">&#9654; RUN CODE</button><button class="btn" id="rs">RESET</button><button class="btn" id="hn" ${S.hint?'disabled':''}>HINT</button><button class="btn go" id="sb">SUBMIT</button></div>
+ <pre id="con">&gt;&gt;&gt; พร้อมใช้งาน</pre><p id="hb" class="ok" aria-live="polite">${esc(S.msg||'')}</p>
+ <p class="mut" id="ss">${S.mode==='practice'?'โหมดฝึกเล่น: ไม่บันทึกคะแนน':S.saved?'บันทึกกับระบบแล้ว':'กำลังเชื่อมต่อ...'}</p><button class="btn sm bad" id="ex">ออกจากเกม</button>`;
+ const pal=$('#pal');L.tok.forEach(t=>{const b=document.createElement('button');b.className='tok';b.textContent=t==='NL'?'↵ ขึ้นบรรทัดใหม่':t;bindDrag(b,t);pal.appendChild(b)});
+ drawCode();
+ $('#rs').onclick=()=>{S.tokens=[];drawCode();$('#dv').textContent='lab_data = '+repr(L.d);$('#con').textContent='>>> รีเซ็ตแล้ว'};
+ $('#run').onclick=()=>{const c=codeStr(),r=runProgram(c,L.d);$('#dv').textContent='lab_data = '+repr(r.env.lab_data);$('#con').textContent='>>> '+c.replace(/\n/g,'\n>>> ')+'\n'+(r.ok?(r.out!==undefined?repr(r.out):'(ไม่มีผลลัพธ์แสดง)'):'❌ '+r.error)};
+ $('#hn').onclick=()=>{if(S.hint)return;S.hint=true;S.hints++;$('#hb').textContent='คำใบ้: '+L.h;$('#hn').disabled=true;save();sync(false)};
+ $('#sb').onclick=submit;$('#ex').onclick=()=>{if(confirm('ออกจากเกม? ความคืบหน้าที่บันทึกไว้จะยังอยู่ในเครื่องนี้')){S=null;home()}};
+ const t0=Date.now();tick=setInterval(()=>{const e=$('#tm');if(e)e.textContent='⏱ '+fmt((Date.now()-S.t0)/1000)},1000)}
+const codeStr=()=>S.tokens.map(t=>t==='NL'?'\n':t).join(' ').replace(/ ?\n ?/g,'\n');
+function drawCode(){const c=$('#code');c.innerHTML=S.tokens.length?'':'<span class="mut">วางคำสั่งที่นี่ (แตะคำสั่งที่วางแล้วเพื่อลบ)</span>';
+ S.tokens.forEach((t,i)=>{const b=document.createElement('button');b.className='chip'+(t==='NL'?' nl':'');b.textContent=t==='NL'?'↵':t;b.setAttribute('aria-label','ลบ '+t);b.onclick=()=>{S.tokens.splice(i,1);drawCode();save()};c.appendChild(b)})}
+function add(t){S.tokens.push(t);drawCode();save();sfx('click')}
+const hit=ev=>{const x=document.elementFromPoint(ev.clientX,ev.clientY);return x&&x.closest('#code')};
+function bindDrag(el,v){el.addEventListener('click',()=>{if(Date.now()-(el._dt||0)<400)return;add(v)});
+ el.addEventListener('pointerdown',e=>{const sx=e.clientX,sy=e.clientY;let g=null;
+  const mv=ev=>{if(!g&&Math.hypot(ev.clientX-sx,ev.clientY-sy)>8){g=el.cloneNode(true);g.className+=' ghost';document.body.appendChild(g)}if(g){g.style.left=ev.clientX+'px';g.style.top=ev.clientY+'px';$('#code').classList.toggle('over',!!hit(ev))}};
+  const up=ev=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);
+   if(g){g.remove();el._dt=Date.now();const c=$('#code');if(c)c.classList.remove('over');if(ev.type==='pointerup'&&hit(ev))add(v)}};
+  addEventListener('pointermove',mv);addEventListener('pointerup',up);addEventListener('pointercancel',up)})}
+function submit(){const L=LV[S.lvl],r=runProgram(codeStr(),L.d);
+ if(r.ok&&L.ok(r)){const sc=lvScore(S.wrong,S.hint);S.scores.push(sc);sfx('pass');S.lvl++;S.hearts=5;S.wrong=0;S.hint=false;S.tokens=[];S.msg='';save();
+  if(S.lvl>=9){S.done=true;S.endT=Date.now();save();sync(true).then(end);end();return}sync(false);flash('✅ ผ่านด่าน! +'+sc+' คะแนน',play);return}
+ S.wrong++;S.wrongTotal++;S.hearts--;sfx('bad');save();const cause=r.ok?'ผลลัพธ์ยังไม่ตรงเงื่อนไขของภารกิจ (ดูโจทย์และ Dictionary อีกครั้ง)':r.error;
+ if(S.hearts<=0){sfx('over');sync(false);root.innerHTML=`<div class="overlay"><h1 class="fail">SYSTEM FAILURE</h1><p>หัวใจหมดแล้ว สาเหตุล่าสุด: ${esc(cause)}</p><p>คะแนนของด่านก่อนหน้ายังอยู่ครบ</p><button class="btn go" id="rl">เริ่ม Level นี้ใหม่</button></div>`;
+  $('#rl').onclick=()=>{S.hearts=5;S.tokens=[];save();sync(false);play()};return}
+ const c=$('#con');c.textContent='❌ ยังไม่ถูกต้อง: '+cause+'\nเหลือหัวใจ '+S.hearts+' ดวง';c.classList.add('shake');setTimeout(()=>c.classList.remove('shake'),400);
+ $('#hr').innerHTML='&#10084;&#65039;'.repeat(S.hearts)+'&#128420;'.repeat(5-S.hearts);document.body.classList.toggle('alert',S.hearts<=1);if(S.hearts<=1)sfx('warn')}
+function flash(t,cb){root.innerHTML=`<div class="overlay" style="background:rgba(0,40,30,.9)"><h1 class="pass">${esc(t)}</h1></div>`;setTimeout(cb,1100)}
+/* ---------- จบเกม ---------- */
+async function end(){clearInterval(tick);document.body.classList.remove('alert');sfx('end');const secs=((S.endT||Date.now())-S.t0)/1000,m=i=>S.scores.slice(i*3,i*3+3).reduce((a,b)=>a+b,0);
+ root.innerHTML=`<div class="card"><h1 class="pass">MISSION COMPLETE</h1><p>สถานี SCI-LAB ได้รับการกอบกู้แล้ว! &#128640;</p>
+ <p><b>คะแนนรวม ${total()}/900</b> · เวลา ${fmt(secs)} · คำใบ้ ${S.hints} ครั้ง · ตอบผิด ${S.wrongTotal} ครั้ง</p>
+ <p>${MAINS.map((n,i)=>n+': '+m(i)+'/300').join(' · ')}</p><p id="ss" class="${S.saved?'ok':'fail'}">${S.mode==='practice'?'โหมดฝึกเล่น: ไม่ได้บันทึกคะแนน':S.saved?'บันทึกกับระบบแล้ว (ยืนยันจากหลังบ้าน)':'ผลนี้ยังอยู่ในเบราว์เซอร์เท่านั้น ยังไม่ได้ยืนยันกับหลังบ้าน'}</p>
+ <div class="row"><button class="btn" id="rt">${S.mode==='online'?'บันทึก/ลองใหม่':'เล่นอีกครั้ง'}</button><button class="btn" id="hm">กลับหน้าแรก</button></div></div><div class="card"><h3>อันดับห้องเรียน</h3><div id="bd" class="mut">กำลังโหลด...</div></div>`;
+ $('#hm').onclick=()=>{localStorage.removeItem('scilab_state');S=null;home()};$('#rt').onclick=async()=>{if(S.mode==='online'){await sync(true);end()}else{localStorage.removeItem('scilab_state');S=null;home()}};
+ if(S.mode!=='online'){$('#bd').textContent='ไม่มีข้อมูลการแข่งขัน (โหมดฝึกเล่น)';return}
+ const r=await api('board',{pid:S.pid});if(!$('#bd'))return;if(!r.ok){$('#bd').textContent='ไม่สามารถโหลดข้อมูลการแข่งขันแบบเรียลไทม์ได้ ('+errTxt(r)+')';return}
+ $('#bd').innerHTML='<b>จบเกมแล้ว</b><ol>'+r.done.map(x=>`<li>${esc(x.nick)} — ${x.total} คะแนน (${fmt(x.secs)})</li>`).join('')+'</ol><b>ยังเล่นไม่จบ</b><ul>'+(r.playing.map(x=>`<li>${esc(x.nick)} — Level ${x.level}</li>`).join('')||'<li>ไม่มี</li>')+'</ul><span class="mut">ข้อมูลจากหลังบ้าน อัปเดตเมื่อโหลดหน้านี้</span>'}
+/* ================= ครู ================= */
+const modal=$('#modal'),mb=$('#mbody');let curRoom='',rpoll=null;
+$('#tBtn').onclick=()=>{modal.style.display='flex';tk?tPanel():tLogin()};
+function closeM(){modal.style.display='none';clearInterval(rpoll)}
+function tLogin(){mb.innerHTML=`<div class="row" style="justify-content:space-between"><h2>เข้าสู่ระบบครู</h2><button class="btn sm" id="cm">ปิด</button></div>
+ <label for="au">URL ของ Google Apps Script Web App</label><input id="au" value="${esc(apiUrl())}" placeholder="https://script.google.com/macros/s/.../exec">
+ <label for="pw">รหัสผ่านครู</label><input id="pw" type="password" autocomplete="current-password"><p class="err" id="le" role="alert">${apiUrl()?'':'ยังไม่ได้ตั้งค่าระบบหลังบ้าน: วาง URL ตามคู่มือก่อน'}</p><button class="btn go" id="li">เข้าสู่ระบบ</button>`;
+ $('#cm').onclick=closeM;$('#li').onclick=async()=>{localStorage.setItem('scilab_api',$('#au').value.trim());tk='';const r=await api('login',{pw:$('#pw').value});if(!r.ok)return $('#le').textContent=errTxt(r);tk=r.tk;sessionStorage.setItem('tk',tk);tPanel()}}
+async function tPanel(){mb.innerHTML=`<div class="row" style="justify-content:space-between"><h2>แดชบอร์ดครู</h2><span><button class="btn sm" id="lo">ออกจากระบบ</button> <button class="btn sm" id="cm">ปิด</button></span></div><div id="st" class="mut">กำลังตรวจสอบการเชื่อมต่อ...</div><div id="tb"></div>`;
+ $('#cm').onclick=closeM;$('#lo').onclick=()=>{tk='';sessionStorage.removeItem('tk');closeM()};
+ const r=await api('ping');if(!r.ok){if(/สิทธิ์|เข้าสู่ระบบ/.test(r.error||'')){tk='';sessionStorage.removeItem('tk');return tLogin()}$('#st').innerHTML='<span class="fail">ยังไม่ได้เชื่อมต่อ: '+esc(errTxt(r))+'</span>';return}
+ $('#st').innerHTML=`<span class="ok">เชื่อมต่อหลังบ้านสำเร็จ</span> · Spreadsheet: ${r.sheetUrl?`<a href="${esc(r.sheetUrl)}" target="_blank" rel="noopener" style="color:var(--cy)">เปิดใน Google Sheets</a>`:'<b class="fail">ยังไม่ได้สร้าง</b>'} <button class="btn sm" id="mk">${r.sheetUrl?'ตรวจสอบ/ซ่อมชีต':'สร้าง Spreadsheet ใหม่'}</button>`;
+ $('#mk').onclick=async()=>{const x=await api('setup');x.ok?tPanel():$('#st').innerHTML='<span class="fail">'+esc(errTxt(x))+'</span> (ตรวจสิทธิ์ Drive/Sheets ของบัญชีที่ Deploy)'};
+ $('#tb').innerHTML=`<div class="card"><h3>สร้างห้องเรียน</h3><div class="row"><input id="rn" placeholder="ชื่อห้อง/กลุ่ม เช่น ป.4/1" maxlength="40"><select id="rc">${[1,2,3,4,5,6].map(n=>`<option>ป.${n}</option>`).join('')}</select><button class="btn go" id="cr">สร้างห้อง</button></div><p class="err" id="re"></p></div><div id="rl"></div><div id="ro"></div>`;
+ $('#cr').onclick=async()=>{const x=await api('createRoom',{name:$('#rn').value.trim(),cls:$('#rc').value});x.ok?rooms():$('#re').textContent=errTxt(x)};rooms()}
+async function rooms(){const x=await api('rooms');if(!x.ok)return;$('#rl').innerHTML=x.rooms.map(r=>`<div class="card stu"><b>${esc(r.name)}</b> · ${esc(r.cls)} · รหัส <b style="color:var(--cy);font-size:20px">${esc(r.code)}</b> · ${r.status==='open'?'<span class="ok">เปิดรับ</span>':r.status==='closed'?'ปิดแล้ว':'ยังไม่เปิด'}
+ <div class="row" style="margin-top:6px">${r.status!=='closed'?`<button class="btn sm" data-o="${r.status==='open'?'close':'open'}" data-s="${esc(r.id)}">${r.status==='open'?'ปิดห้อง':'เปิดห้อง'}</button><button class="btn sm" data-o="regen" data-s="${esc(r.id)}">สร้างรหัสใหม่</button>`:''}<button class="btn sm" data-w="${esc(r.id)}">ดูนักเรียน</button><button class="btn sm" data-o="sum" data-s="${esc(r.id)}">สรุปผล+ปิดห้อง</button></div></div>`).join('')||'<p class="mut">ยังไม่มีห้อง</p>';
+ $('#rl').querySelectorAll('[data-o]').forEach(b=>b.onclick=async()=>{if(b.dataset.o==='sum'&&!confirm('สรุปผลและปิดห้อง? ผู้ที่ไม่เข้าเล่นและไม่ได้ลาจะถูกบันทึกเป็น "ขาด"'))return;const r=await api(b.dataset.o==='sum'?'summarize':'setRoom',{session:b.dataset.s,op:b.dataset.o});if(!r.ok)alert(errTxt(r));else if(r.summary)alert('สรุป: '+Object.entries(r.summary).map(([k,v])=>k+' '+v).join(' · '));rooms()});
+ $('#rl').querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{curRoom=b.dataset.w;roster();clearInterval(rpoll);rpoll=setInterval(roster,10000)})}
+async function roster(){const x=await api('roster',{session:curRoom}),o=$('#ro');if(!o)return;
+ if(!x.ok){o.innerHTML='<p class="fail">โหลดข้อมูลไม่ได้ ข้อมูลที่เห็นอาจเก่า: '+esc(errTxt(x))+'</p>'+o.innerHTML.replace(/^<p class="fail">.*?<\/p>/,'');return}
+ o.innerHTML=`<h3>นักเรียนในห้อง <span class="mut">อัปเดตล่าสุด ${new Date().toLocaleTimeString('th-TH')} (โหลดซ้ำทุก 10 วินาที)</span></h3>`+x.students.map(s=>`<div class="card stu"><b>${esc(s.name)}</b> (${esc(s.nick||'-')}) ${esc(s.cls)} เลขที่ ${esc(s.no)}<br>เข้าร่วม: ${esc(s.attend)} · เกม: <b>${esc(s.status)}</b> · LV ${s.level||'-'} · ♥${s.hearts??'-'} · ${s.total??0} คะแนน · ${s.secs?fmt(s.secs):'-'}
+ <div class="row" style="margin-top:6px"><select data-a="${esc(s.id)}" aria-label="สถานะเข้าร่วม">${['มา','ขาด','ลา'].map(v=>`<option${v===s.attend?' selected':''}>${v}</option>`).join('')}</select><input data-h="${esc(s.id)}" placeholder="คำใบ้ถึงนักเรียน (เว้นว่างเพื่อยกเลิก)" maxlength="200"><button class="btn sm" data-hs="${esc(s.id)}">ส่งคำใบ้</button></div></div>`).join('');
+ o.querySelectorAll('[data-a]').forEach(e=>e.onchange=async()=>{const r=await api('attend',{session:curRoom,sid:e.dataset.a,status:e.value});if(!r.ok)alert(errTxt(r))});
+ o.querySelectorAll('[data-hs]').forEach(b=>b.onclick=async()=>{b.disabled=true;const r=await api('hint',{session:curRoom,sid:b.dataset.hs,text:o.querySelector('[data-h="'+b.dataset.hs+'"]').value.trim()});b.disabled=false;alert(r.ok?'ส่งแล้ว':errTxt(r))})}
+/* ================= เริ่มต้น ================= */
+if(location.search.includes('test')){const R=runTests(),bad=R.filter(x=>!x[1]);root.innerHTML='<div class="card"><h2>Unit tests: '+(R.length-bad.length)+'/'+R.length+' ผ่าน</h2><pre>'+R.map(x=>(x[1]?'PASS ':'FAIL ')+esc(x[0])).join('\n')+'</pre></div>'}
+else{const old=JSON.parse(localStorage.getItem('scilab_state')||'null');
+ if(old&&!old.done&&old.p){S=old;if(S.mode==='online'){api('progress',{pid:S.pid,level:S.lvl+1,hearts:S.hearts,scores:S.scores,wrong:S.wrongTotal,hints:S.hints,done:false}).then(r=>{if(r.ok){S.saved=true;poll=setInterval(()=>S&&!S.done&&sync(false),10000);play()}else{S=null;localStorage.removeItem('scilab_state');home()}})}else play()}
+ else home()}
+</script></body></html>
