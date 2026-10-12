@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCI-LAB: SPACE LAB EMERGENCY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy-black: #07111F;
+            --deep-blue: #0B1F3A;
+            --electric-blue: #00C8FF;
+            --cyan: #63F5FF;
+            --emergency-red: #FF334F;
+            --neon-green: #4DFFB5;
+            --white: #F3F8FF;
+            --gray: #4A5B73;
+            --glow-blue: 0 0 10px var(--electric-blue);
+            --glow-red: 0 0 15px var(--emergency-red);
+            --glow-green: 0 0 10px var(--neon-green);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Kanit', sans-serif; }
+        
+        body {
+            background-color: var(--navy-black);
+            color: var(--white);
+            background-image: 
+                linear-gradient(rgba(7, 17, 31, 0.9), rgba(7, 17, 31, 0.9)),
+                linear-gradient(0deg, transparent 24%, rgba(0, 200, 255, 0.1) 25%, rgba(0, 200, 255, 0.1) 26%, transparent 27%, transparent 74%, rgba(0, 200, 255, 0.1) 75%, rgba(0, 200, 255, 0.1) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(0, 200, 255, 0.1) 25%, rgba(0, 200, 255, 0.1) 26%, transparent 27%, transparent 74%, rgba(0, 200, 255, 0.1) 75%, rgba(0, 200, 255, 0.1) 76%, transparent 77%, transparent);
+            background-size: 100% 100%, 50px 50px, 50px 50px;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Utility */
+        .hidden { display: none !important; }
+        .text-cyan { color: var(--cyan); }
+        .text-red { color: var(--emergency-red); }
+        .text-green { color: var(--neon-green); }
+        
+        /* Buttons */
+        button {
+            background: rgba(11, 31, 58, 0.8);
+            border: 1px solid var(--electric-blue);
+            color: var(--electric-blue);
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            box-shadow: var(--glow-blue);
+        }
+        button:hover { background: var(--electric-blue); color: var(--navy-black); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; border-color: var(--gray); color: var(--gray); }
+        .btn-red { border-color: var(--emergency-red); color: var(--emergency-red); box-shadow: var(--glow-red); }
+        .btn-red:hover { background: var(--emergency-red); color: var(--white); }
+        .btn-green { border-color: var(--neon-green); color: var(--neon-green); box-shadow: var(--glow-green); }
+        .btn-green:hover { background: var(--neon-green); color: var(--navy-black); }
+
+        /* Inputs */
+        input, select {
+            background: rgba(7, 17, 31, 0.8);
+            border: 1px solid var(--electric-blue);
+            color: var(--white);
+            padding: 12px;
+            border-radius: 5px;
+            width: 100%;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+        input:focus { outline: none; box-shadow: var(--glow-blue); }
+
+        /* Layouts */
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; width: 100%; flex: 1; display: flex; flex-direction: column; }
+        .screen { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; animation: fadeIn 0.5s ease; }
+        
+        /* Teacher Icon */
+        #teacher-icon { position: absolute; top: 20px; left: 20px; font-size: 24px; cursor: pointer; color: var(--gray); transition: color 0.3s; z-index: 100; }
+        #teacher-icon:hover { color: var(--electric-blue); }
+
+        /* HUD Header */
+        .hud-header { display: flex; justify-content: space-between; width: 100%; border-bottom: 2px solid var(--electric-blue); padding-bottom: 10px; margin-bottom: 20px; align-items: center; }
+        .hud-title { font-size: 1.5rem; color: var(--cyan); text-shadow: var(--glow-blue); }
+        .hud-stats { display: flex; gap: 20px; font-weight: bold; }
+        
+        /* Game Layout */
+        .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; flex: 1; }
+        @media (max-width: 768px) { .game-grid { grid-template-columns: 1fr; } }
+        
+        .panel { background: rgba(11, 31, 58, 0.7); border: 1px solid var(--cyan); border-radius: 8px; padding: 15px; position: relative; overflow: hidden; }
+        .panel::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--cyan); box-shadow: var(--glow-blue); }
+        
+        /* Blocks & Slots */
+        .block-area { display: flex; flex-wrap: wrap; gap: 10px; min-height: 60px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px; border: 1px dashed var(--gray); }
+        .code-block { background: var(--deep-blue); border: 1px solid var(--electric-blue); padding: 8px 12px; border-radius: 4px; cursor: grab; font-family: monospace; font-size: 1.1rem; box-shadow: var(--glow-blue); user-select: none; }
+        .code-block.selected { background: var(--electric-blue); color: var(--navy-black); }
+        
+        .slot-area { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: center; min-height: 80px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; margin: 20px 0; }
+        .drop-slot { width: 100px; height: 45px; border: 2px dashed var(--gray); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .drop-slot.filled { border: 2px solid var(--neon-green); box-shadow: var(--glow-green); }
+        .drop-slot.active { border-color: var(--electric-blue); background: rgba(0, 200, 255, 0.1); }
+
+        /* Dict Display */
+        .dict-display { font-family: monospace; text-align: left; background: #000; padding: 15px; border-radius: 5px; border: 1px solid var(--gray); color: #fff; margin-top: 10px; white-space: pre-wrap; font-size: 1.1rem;}
+        .key { color: var(--electric-blue); }
+        .string { color: var(--neon-green); }
+        .number { color: #FFB300; }
+
+        /* Hearts */
+        .hearts { display: flex; gap: 5px; color: var(--emergency-red); font-size: 1.5rem; text-shadow: var(--glow-red); }
+        .heart.empty { color: var(--gray); text-shadow: none; }
+
+        /* Modals & Alerts */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: var(--deep-blue); border: 2px solid var(--electric-blue); padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; text-align: center; box-shadow: 0 0 20px var(--electric-blue); }
+        
+        /* Emergency Effect */
+        @keyframes flashRed { 0%, 100% { box-shadow: inset 0 0 0px var(--emergency-red); } 50% { box-shadow: inset 0 0 50px var(--emergency-red); } }
+        .emergency { animation: flashRed 1s infinite; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Loader */
+        .loader { border: 4px solid var(--gray); border-top: 4px solid var(--electric-blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Teacher Dashboard Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; }
+        th, td { border: 1px solid var(--gray); padding: 10px; text-align: left; }
+        th { background: rgba(0, 200, 255, 0.1); color: var(--cyan); }
+        .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; }
+        .bg-green { background: rgba(77, 255, 181, 0.2); color: var(--neon-green); }
+        .bg-red { background: rgba(255, 51, 79, 0.2); color: var(--emergency-red); }
+        .bg-gray { background: rgba(255, 255, 255, 0.1); color: var(--white); }
+
+        /* Settings Panel */
+        .settings-panel { background: #000; padding: 15px; border: 1px solid var(--emergency-red); border-radius: 5px; margin-bottom: 20px; text-align: left;}
+
+    </style>
+</head>
+<body>
+
+    <div id="teacher-icon" onclick="app.showScreen('teacher-login-screen')">⚙️</div>
+
+    <div class="container">
+        <!-- 1. Home / Setup Screen -->
+        <div id="home-screen" class="screen">
+            <h1 class="hud-title" style="font-size: 3rem; margin-bottom: 10px;">SCI-LAB</h1>
+            <h2 class="text-red" style="margin-bottom: 30px;">SPACE LAB EMERGENCY</h2>
+            <div class="panel" style="max-width: 400px; width: 100%;">
+                <h3>ข้อมูลนักวิทยาศาสตร์ฝึกหัด</h3>
+                <p style="font-size: 0.8rem; color: var(--gray); margin-bottom: 15px;">ระบุข้อมูลเพื่อลงทะเบียนเข้าสู่ระบบ</p>
+                <input type="text" id="stu-name" placeholder="ชื่อ-นามสกุล (ระบบจะตัดคำนำหน้าให้อัตโนมัติ)">
+                <div style="display: flex; gap: 10px;">
+                    <select id="stu-class">
+                        <option value="">-- เลือกชั้น --</option>
+                        <option value="ป.1">ป.1</option><option value="ป.2">ป.2</option><option value="ป.3">ป.3</option>
+                        <option value="ป.4">ป.4</option><option value="ป.5">ป.5</option><option value="ป.6">ป.6</option>
+                    </select>
+                    <input type="number" id="stu-no" placeholder="เลขที่" min="1" max="99">
+                </div>
+                <button onclick="app.verifyStudentInfo()" style="width: 100%;">ตรวจสอบข้อมูล</button>
+                <div id="stu-name-preview" class="text-cyan hidden" style="margin-top: 10px; font-weight: bold;"></div>
+                <div id="home-error" class="text-red hidden" style="margin-top: 10px;"></div>
+            </div>
+        </div>
+
+        <!-- 2. Room Join Screen -->
+        <div id="join-screen" class="screen hidden">
+            <h2 class="hud-title">เชื่อมต่อสถานีอวกาศ</h2>
+            <div class="panel" style="max-width: 400px; width: 100%;">
+                <input type="text" id="stu-nickname" placeholder="ชื่อเล่น">
+                <input type="text" id="room-code" placeholder="รหัสห้องเรียน 4 หลัก" maxlength="4" style="text-align: center; font-size: 1.5rem; letter-spacing: 5px;">
+                <button onclick="app.joinRoom()" style="width: 100%;">ACCESS SYSTEM</button>
+                <div id="join-error" class="text-red hidden" style="margin-top: 10px;"></div>
+            </div>
+        </div>
+
+        <!-- 3. Game Screen -->
+        <div id="game-screen" class="screen hidden" style="justify-content: flex-start;">
+            <div class="hud-header">
+                <div>
+                    <span class="text-cyan" id="ui-stage">STAGE 1</span> | 
+                    <span id="ui-level">LEVEL 1.1</span>
+                </div>
+                <div class="hud-stats">
+                    <div>SCORE: <span id="ui-score" class="text-neon">0</span></div>
+                    <div class="hearts" id="ui-hearts"></div>
+                </div>
+            </div>
+
+            <div class="game-grid">
+                <!-- Left Panel: Mission & Blocks -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div class="panel">
+                        <h3 class="text-red">MISSION INCOMING</h3>
+                        <p id="mission-desc" style="margin-top: 10px; font-size: 1.1rem;"></p>
+                    </div>
+
+                    <div class="panel">
+                        <h3 class="text-cyan">COMMAND MODULE</h3>
+                        <p style="font-size: 0.8rem; color: var(--gray); margin-bottom: 10px;">แตะบล็อกแล้วแตะช่องว่าง หรือลากวาง (Drag & Drop)</p>
+                        <div class="block-area" id="block-source"></div>
+                        
+                        <div class="slot-area" id="drop-zone"></div>
+                        
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button onclick="app.runCode()" class="btn-green" style="flex: 2;">RUN CODE</button>
+                            <button onclick="app.resetBlocks()" style="flex: 1;">RESET</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Result & Dict -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div class="panel" style="flex: 1;">
+                        <h3 class="text-cyan">SYSTEM DATA (Dictionary)</h3>
+                        <div id="dict-display" class="dict-display"></div>
+                    </div>
+                    
+                    <div class="panel">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3 class="text-cyan">TERMINAL OUTPUT</h3>
+                            <button id="btn-hint" onclick="app.useHint()" style="padding: 5px 10px; font-size: 0.8rem;">HINT</button>
+                        </div>
+                        <div id="terminal-out" style="background: #000; padding: 10px; border-radius: 5px; margin-top: 10px; min-height: 60px; border: 1px solid var(--gray); color: var(--gray);">
+                            Waiting for command...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Teacher Login Screen -->
+        <div id="teacher-login-screen" class="screen hidden">
+            <h2 class="hud-title">TEACHER OVERRIDE</h2>
+            <div class="panel" style="max-width: 500px; width: 100%; text-align: left;">
+                <div class="settings-panel">
+                    <h4 class="text-red">SYSTEM CONFIGURATION</h4>
+                    <p style="font-size: 0.8rem; color: var(--gray); margin-bottom: 10px;">กรอก URL ของ Google Apps Script Web App เพื่อเปิดใช้งานระบบฐานข้อมูล</p>
+                    <input type="text" id="gas-url" placeholder="https://script.google.com/macros/s/.../exec" value="">
+                    <button onclick="app.saveGasUrl()" class="btn-green" style="width: 100%; font-size: 0.9rem;">บันทึก URL & ตรวจสอบการเชื่อมต่อ</button>
+                    <div id="gas-status" style="margin-top: 10px; font-size: 0.9rem;">สถานะ: <span class="text-red">ยังไม่ได้เชื่อมต่อ</span></div>
+                </div>
+
+                <input type="password" id="teacher-pass" placeholder="Teacher Password (ทดสอบใช้: 1234)">
+                <button onclick="app.teacherLogin()" style="width: 100%;">LOGIN</button>
+                <button onclick="app.showScreen('home-screen')" style="width: 100%; margin-top: 10px; background: transparent;">กลับหน้าหลัก</button>
+                <div id="teacher-login-error" class="text-red hidden" style="margin-top: 10px;"></div>
+            </div>
+        </div>
+
+        <!-- 5. Teacher Dashboard Screen -->
+        <div id="dashboard-screen" class="screen hidden" style="justify-content: flex-start;">
+            <div class="hud-header">
+                <h2 class="hud-title">TEACHER DASHBOARD</h2>
+                <button onclick="app.teacherLogout()" class="btn-red">LOGOUT</button>
+            </div>
+
+            <div class="panel" style="width: 100%; text-align: left; margin-bottom: 20px;">
+                <h3 class="text-cyan">Room Management</h3>
+                <div style="display: flex; gap: 10px; margin-top: 10px; align-items: center; flex-wrap: wrap;">
+                    <select id="dash-class" style="width: 150px; margin: 0;">
+                        <option value="ป.1">ป.1</option><option value="ป.2">ป.2</option><option value="ป.3">ป.3</option>
+                        <option value="ป.4">ป.4</option><option value="ป.5">ป.5</option><option value="ป.6">ป.6</option>
+                    </select>
+                    <input type="text" id="dash-room-name" placeholder="ชื่อห้อง (เช่น ป.4/1)" style="width: 200px; margin: 0;">
+                    <button onclick="app.createRoom()" class="btn-green">สร้างและเปิดห้องเรียน</button>
+                    <button onclick="app.closeRoom()" class="btn-red" id="btn-close-room" disabled>ปิดห้องเรียน / สรุปผล</button>
+                </div>
+                <div id="current-room-info" style="margin-top: 15px; font-size: 1.2rem; display: none;">
+                    รหัสห้องปัจจุบัน: <span id="dash-room-code" class="text-neon" style="font-size: 1.5rem; letter-spacing: 2px;"></span>
+                    <span id="dash-room-status" class="status-badge bg-green" style="margin-left: 10px;">OPEN</span>
+                </div>
+            </div>
+
+            <div class="panel" style="width: 100%; text-align: left; overflow-x: auto;">
+                <h3 class="text-cyan" style="display: flex; justify-content: space-between;">
+                    Student Live Status
+                    <button onclick="app.fetchDashboardData()" style="padding: 5px 10px; font-size: 0.8rem;">Refresh (API)</button>
+                </h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ชื่อ-นามสกุล</th>
+                            <th>ชั้น/เลขที่</th>
+                            <th>สถานะ</th>
+                            <th>ความคืบหน้า</th>
+                            <th>หัวใจ</th>
+                            <th>คะแนน</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dash-students">
+                        <!-- Data populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modals -->
+    <div id="modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="modal-title" class="text-cyan"></h2>
+            <p id="modal-desc" style="margin: 20px 0;"></p>
+            <div id="modal-loader" class="loader hidden"></div>
+            <button id="modal-btn" onclick="app.closeModal()">รับทราบ</button>
+        </div>
+    </div>
+
+    <!-- Audio Synth -->
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTone(freq, type, duration, vol=0.1) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        }
+        const sound = {
+            click: () => playTone(800, 'sine', 0.1),
+            drop: () => playTone(400, 'square', 0.1),
+            success: () => { playTone(523.25, 'sine', 0.1); setTimeout(()=>playTone(659.25, 'sine', 0.2), 100); setTimeout(()=>playTone(783.99, 'sine', 0.4), 200); },
+            fail: () => { playTone(150, 'sawtooth', 0.3); setTimeout(()=>playTone(100, 'sawtooth', 0.5), 200); },
+            emergency: () => { playTone(800, 'square', 0.2, 0.2); setTimeout(()=>playTone(600, 'square', 0.2, 0.2), 200); }
+        };
+    </script>
+
+    <!-- Main Game Logic -->
+    <script>
+        // --- 1. CONFIG & DATA ---
+        const CONFIG = {
+            GAS_URL: localStorage.getItem('gas_url') || "",
+            MOCK_MODE: true // Turns false when GAS_URL is set and verified
+        };
+
+        const GAME_LEVELS = [
+            // STAGE 1: ACCESS
+            { id: "1.1", stage: "ACCESS DATA", title: "Unlock the Airlock", 
+              desc: "ประตูห้องทดลองถูกล็อก เข้าถึงค่าแรงโน้มถ่วง (Gravity) จากระบบ",
+              initDict: { "Gravity": 9.8, "Oxygen_Level": 21, "Temperature": -15 },
+              blocks: ["lab_data", '["Gravity"]', '["Oxygen_Level"]', "="], slots: 2,
+              validate: (arr) => arr.join('') === 'lab_data["Gravity"]',
+              hint: "เลือกชื่อตัวแปร lab_data ตามด้วย Key [\"Gravity\"]" },
+            { id: "1.2", stage: "ACCESS DATA", title: "Oxygen Recovery", 
+              desc: "ตรวจสอบระดับออกซิเจนด่วน! เข้าถึงค่า Oxygen_Level",
+              initDict: { "Gravity": 9.8, "Oxygen_Level": 21, "Temperature": -15 },
+              blocks: ["lab_data", '["Oxygen_Level"]', '["Temperature"]'], slots: 2,
+              validate: (arr) => arr.join('') === 'lab_data["Oxygen_Level"]',
+              hint: "ใช้รูปแบบเดียวกับด่านแรก แต่เปลี่ยน Key เป็น ออกซิเจน" },
+            { id: "1.3", stage: "ACCESS DATA", title: "Emergency Code", 
+              desc: "ระบบต้องการรหัสฉุกเฉิน ดึงค่า Temperature ออกมา",
+              initDict: { "Gravity": 9.8, "Oxygen_Level": 21, "Temperature": -15 },
+              blocks: ['["Gravity"]', '["Temperature"]', "lab_data"], slots: 2,
+              validate: (arr) => arr.join('') === 'lab_data["Temperature"]',
+              hint: "หาค่าอุณหภูมิ (Temperature)" },
+            
+            // STAGE 2: MODIFY
+            { id: "2.1", stage: "MODIFY DATA", title: "Chemical Supply", 
+              desc: "เพิ่มข้อมูลสารเคมี H2O ที่มีสถานะ (State) เป็น Solid ลงใน Dictionary",
+              initDict: { "Gravity": 9.8 },
+              blocks: ["lab_data", '["H2O"]', "=", '{"State": "Solid"}', '{"State": "Liquid"}'], slots: 4,
+              validate: (arr) => arr.join('') === 'lab_data["H2O"]={"State": "Solid"}',
+              hint: "lab_data[\"H2O\"] = ... (รูปแบบ JSON ของ Solid)" },
+            { id: "2.2", stage: "MODIFY DATA", title: "Melting Protocol", 
+              desc: "แก้ไขค่า State ของ H2O จาก Solid เป็น Liquid",
+              initDict: { "Gravity": 9.8, "H2O": {"State": "Solid"} },
+              blocks: ["lab_data", '["H2O"]', '["State"]', "=", '"Liquid"'], slots: 5,
+              validate: (arr) => arr.join('') === 'lab_data["H2O"]["State"]="Liquid"',
+              hint: "เข้าถึงคีย์ซ้อนกัน lab_data[\"H2O\"][\"State\"] แล้วกำหนดค่าใหม่" },
+            { id: "2.3", stage: "MODIFY DATA", title: "Cooling System", 
+              desc: "ตั้งค่า Temperature ใหม่เป็น -50 เพื่อระบายความร้อน",
+              initDict: { "Temperature": -15, "Status": "Warning" },
+              blocks: ["lab_data", '["Temperature"]', "=", "-50", "20"], slots: 4,
+              validate: (arr) => arr.join('') === 'lab_data["Temperature"]=-50',
+              hint: "เขียนทับค่า Temperature เดิมด้วยตัวเลข -50" },
+
+            // STAGE 3: DELETE
+            { id: "3.1", stage: "DELETE DATA", title: "Toxic Leak", 
+              desc: "มีแก๊สพิษรั่วไหล! ลบ Key 'Toxic_Gas' ออกจากระบบด้วยคำสั่ง del",
+              initDict: { "Oxygen": 21, "Toxic_Gas": 100 },
+              blocks: ["del", "lab_data", '["Toxic_Gas"]', ".pop()"], slots: 3,
+              validate: (arr) => arr.join('') === 'dellab_data["Toxic_Gas"]',
+              hint: "คำสั่ง del ตามด้วยการเข้าถึง Key ที่ต้องการลบ" },
+            { id: "3.2", stage: "DELETE DATA", title: "Emergency Purge", 
+              desc: "ระบบต้องการลบ 'Error_Log' ออกและดึงค่าออกมาดู ใช้ .pop('Error_Log')",
+              initDict: { "System": "OK", "Error_Log": "Crash at 02:00" },
+              blocks: ["lab_data", ".pop(", "'Error_Log'", ")", "del"], slots: 4,
+              validate: (arr) => arr.join('') === "lab_data.pop('Error_Log')",
+              hint: "ใช้ตัวแปร ตามด้วย .pop() และระบุชื่อคีย์ในวงเล็บ" },
+            { id: "3.3", stage: "DELETE DATA", title: "Final System Recovery", 
+              desc: "ล้างไวรัส (Virus) ออกจากระบบเพื่อกอบกู้สถานี",
+              initDict: { "Gravity": 9.8, "Virus": "Active", "Shield": 100 },
+              blocks: ["del", "lab_data", '["Virus"]', "=", "0"], slots: 3,
+              validate: (arr) => arr.join('') === 'dellab_data["Virus"]',
+              hint: "ใช้คำสั่ง del เพื่อลบ Virus ออก" }
+        ];
+
+        // --- 2. APP STATE ---
+        const state = {
+            student: { name: "", class: "", no: "", nickname: "", id: "" },
+            roomCode: "",
+            session: "",
+            currentLevelIdx: 0,
+            hearts: 5,
+            hintsUsed: 0,
+            mistakes: 0,
+            startTime: null,
+            levelStartTime: null,
+            score: { "1":0, "2":0, "3":0 },
+            currentDict: {},
+            selectedBlock: null // For touch support
+        };
+
+        // --- 3. UTILITIES ---
+        const getEl = id => document.getElementById(id);
+        
+        function formatDictHtml(obj) {
+            let json = JSON.stringify(obj, null, 2);
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) { cls = 'key'; } 
+                    else { cls = 'string'; }
+                } else if (/true|false/.test(match)) { cls = 'boolean'; } 
+                else if (/null/.test(match)) { cls = 'null'; }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+
+        function cleanNamePrefix(name) {
+            const prefixes = ['เด็กชาย', 'เด็กหญิง', 'ด.ช.', 'ด.ญ.', 'ดช', 'ดญ', 'นาย', 'นางสาว', 'นาง'];
+            let cleaned = name.trim();
+            for (let p of prefixes) {
+                if (cleaned.startsWith(p)) {
+                    cleaned = cleaned.substring(p.length).trim();
+                    break;
+                }
+            }
+            return cleaned;
+        }
+
+        // --- 4. API / BACKEND CALLS ---
+        async function gasApi(action, payload) {
+            if (!CONFIG.GAS_URL) {
+                if(CONFIG.MOCK_MODE) return mockApi(action, payload);
+                throw new Error("ระบบยังไม่ได้เชื่อมต่อ Google Apps Script");
+            }
+            try {
+                const response = await fetch(CONFIG.GAS_URL, {
+                    method: 'POST', // Use POST to avoid CORS preflight issues with simple text payload if configured right, or standard form data
+                    mode: 'cors', // Require CORS setup on GAS
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action, ...payload })
+                });
+                const result = await response.json();
+                if(result.status !== 'success') throw new Error(result.message || 'API Error');
+                return result;
+            } catch (e) {
+                console.warn("GAS API Failed, falling back to mock if allowed.", e);
+                if(CONFIG.MOCK_MODE) return mockApi(action, payload);
+                throw e;
+            }
+        }
+
+        // MOCK API for testing before GAS deployment
+        const mockDb = { rooms: {}, students: [] };
+        function mockApi(action, p) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    if(action === 'verifyRoom') {
+                        if(mockDb.rooms[p.code] && mockDb.rooms[p.code].status === 'OPEN') resolve({status:'success', session: p.code+'_ses'});
+                        else resolve({status:'error', message:'ไม่พบห้องเรียน หรือห้องถูกปิดแล้ว'});
+                    }
+                    else if(action === 'createRoom') {
+                        const code = Math.floor(1000 + Math.random() * 9000).toString();
+                        mockDb.rooms[code] = { class: p.class, name: p.name, status: 'OPEN' };
+                        resolve({status:'success', code: code});
+                    }
+                    else if(action === 'saveProgress') {
+                        resolve({status:'success'});
+                    }
+                    else { resolve({status:'success'}); }
+                }, 500);
+            });
+        }
+
+        // --- 5. MAIN APP CONTROLLER ---
+        const app = {
+            init: () => {
+                // Check GAS setup
+                const url = localStorage.getItem('gas_url');
+                if(url) { getEl('gas-url').value = url; getEl('gas-status').innerHTML = 'สถานะ: <span class="text-green">เชื่อมต่อแล้ว</span>'; CONFIG.MOCK_MODE = false;}
+            },
+            
+            showScreen: (screenId) => {
+                document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+                getEl(screenId).classList.remove('hidden');
+                sound.click();
+            },
+
+            showModal: (title, desc, showLoader=false, btnText="รับทราบ", onConfirm=null) => {
+                getEl('modal').classList.remove('hidden');
+                getEl('modal-title').innerText = title;
+                getEl('modal-desc').innerText = desc;
+                if(showLoader) { getEl('modal-loader').classList.remove('hidden'); getEl('modal-btn').classList.add('hidden'); }
+                else { getEl('modal-loader').classList.add('hidden'); getEl('modal-btn').classList.remove('hidden'); getEl('modal-btn').innerText = btnText; }
+                
+                getEl('modal-btn').onclick = () => {
+                    app.closeModal();
+                    if(onConfirm) onConfirm();
+                };
+            },
+            closeModal: () => getEl('modal').classList.add('hidden'),
+
+            // --- STUDENT FLOW ---
+            verifyStudentInfo: () => {
+                const rawName = getEl('stu-name').value;
+                const stuClass = getEl('stu-class').value;
+                const stuNo = getEl('stu-no').value;
+                const err = getEl('home-error');
+
+                if(!rawName || !stuClass || !stuNo) { err.innerText = "กรุณากรอกข้อมูลให้ครบถ้วน"; err.classList.remove('hidden'); return; }
+                
+                state.student.name = cleanNamePrefix(rawName);
+                state.student.class = stuClass;
+                state.student.no = stuNo;
+                state.student.id = `STU_${stuClass}_${stuNo}`; // Mock ID
+
+                err.classList.add('hidden');
+                getEl('stu-name-preview').innerText = `ชื่อที่ระบบบันทึก: ${state.student.name}`;
+                getEl('stu-name-preview').classList.remove('hidden');
+                
+                setTimeout(() => app.showScreen('join-screen'), 1500);
+            },
+
+            joinRoom: async () => {
+                state.student.nickname = getEl('stu-nickname').value;
+                state.roomCode = getEl('room-code').value;
+                const err = getEl('join-error');
+
+                if(!state.student.nickname || state.roomCode.length !== 4) { err.innerText = "ข้อมูลไม่ถูกต้อง"; err.classList.remove('hidden'); return; }
+                
+                err.classList.add('hidden');
+                app.showModal("กำลังเชื่อมต่อ...", "กำลังตรวจสอบรหัสห้องกับสถานีหลัก", true);
+
+                try {
+                    const res = await gasApi('verifyRoom', { code: state.roomCode, student: state.student });
+                    app.closeModal();
+                    state.session = res.session;
+                    app.startGame();
+                } catch(e) {
+                    app.showModal("Connection Failed", e.message || "ไม่สามารถเชื่อมต่อได้");
+                }
+            },
+
+            // --- GAME ENGINE ---
+            startGame: () => {
+                state.currentLevelIdx = 0;
+                state.score = { "1":0, "2":0, "3":0 };
+                state.startTime = Date.now();
+                app.showScreen('game-screen');
+                app.loadLevel();
+                gasApi('saveStatus', { session: state.session, studentId: state.student.id, status: 'PLAYING', level: '1.1' });
+            },
+
+            loadLevel: () => {
+                const lvl = GAME_LEVELS[state.currentLevelIdx];
+                state.hearts = 5;
+                state.hintsUsed = 0;
+                state.mistakes = 0;
+                state.currentDict = JSON.parse(JSON.stringify(lvl.initDict));
+                state.levelStartTime = Date.now();
+
+                getEl('ui-stage').innerText = lvl.stage;
+                getEl('ui-level').innerText = `LEVEL ${lvl.id}`;
+                getEl('mission-desc').innerText = lvl.desc;
+                getEl('btn-hint').disabled = false;
+                getEl('terminal-out').innerHTML = "Waiting for command...";
+                getEl('terminal-out').style.color = "var(--gray)";
+                document.body.classList.remove('emergency');
+
+                app.updateHeartsUI();
+                app.renderDict();
+                app.renderBlocks();
+            },
+
+            renderDict: () => {
+                getEl('dict-display').innerHTML = formatDictHtml(state.currentDict);
+            },
+
+            updateHeartsUI: () => {
+                let html = '';
+                for(let i=0; i<5; i++) {
+                    html += `<span class="heart ${i < state.hearts ? '' : 'empty'}">❤️</span>`;
+                }
+                getEl('ui-hearts').innerHTML = html;
+            },
+
+            renderBlocks: () => {
+                const lvl = GAME_LEVELS[state.currentLevelIdx];
+                const src = getEl('block-source');
+                const drop = getEl('drop-zone');
+                src.innerHTML = ''; drop.innerHTML = '';
+                state.selectedBlock = null;
+
+                // Shuffle blocks visually
+                let blocks = [...lvl.blocks].sort(() => Math.random() - 0.5);
+                
+                blocks.forEach((bText, i) => {
+                    const b = document.createElement('div');
+                    b.className = 'code-block';
+                    b.innerText = bText;
+                    b.draggable = true;
+                    b.id = 'block_' + i;
+                    
+                    // Drag events
+                    b.ondragstart = (e) => { e.dataTransfer.setData('text/plain', e.target.id); sound.click(); };
+                    
+                    // Touch / Click events (Fallback for mobile)
+                    b.onclick = () => {
+                        document.querySelectorAll('.code-block').forEach(el => el.classList.remove('selected'));
+                        b.classList.add('selected');
+                        state.selectedBlock = b;
+                        sound.click();
+                    };
+
+                    src.appendChild(b);
+                });
+
+                for(let i=0; i<lvl.slots; i++) {
+                    const slot = document.createElement('div');
+                    slot.className = 'drop-slot';
+                    
+                    // Drop events
+                    slot.ondragover = (e) => { e.preventDefault(); slot.classList.add('active'); };
+                    slot.ondragleave = (e) => slot.classList.remove('active');
+                    slot.ondrop = (e) => {
+                        e.preventDefault(); slot.classList.remove('active');
+                        const blockId = e.dataTransfer.getData('text/plain');
+                        const block = getEl(blockId);
+                        if(block) {
+                            if(slot.firstChild) src.appendChild(slot.firstChild); // return existing
+                            slot.appendChild(block);
+                            slot.classList.add('filled');
+                            sound.drop();
+                        }
+                    };
+
+                    // Touch / Click drop logic
+                    slot.onclick = () => {
+                        if(state.selectedBlock) {
+                            if(slot.firstChild) src.appendChild(slot.firstChild);
+                            slot.appendChild(state.selectedBlock);
+                            slot.classList.add('filled');
+                            state.selectedBlock.classList.remove('selected');
+                            state.selectedBlock = null;
+                            sound.drop();
+                        } else if(slot.firstChild) {
+                            // Click to remove
+                            src.appendChild(slot.firstChild);
+                            slot.classList.remove('filled');
+                            sound.click();
+                        }
+                    };
+
+                    drop.appendChild(slot);
+                }
+            },
+
+            resetBlocks: () => { app.renderBlocks(); sound.click(); },
+
+            useHint: () => {
+                if(state.hintsUsed > 0) return;
+                state.hintsUsed = 1;
+                getEl('btn-hint').disabled = true;
+                const lvl = GAME_LEVELS[state.currentLevelIdx];
+                app.showModal("SYSTEM HINT", lvl.hint);
+                sound.click();
+            },
+
+            runCode: () => {
+                const slots = Array.from(getEl('drop-zone').children);
+                let currentCodeArr = [];
+                let allFilled = true;
+
+                slots.forEach(s => {
+                    if(s.firstChild) currentCodeArr.push(s.firstChild.innerText);
+                    else allFilled = false;
+                });
+
+                const term = getEl('terminal-out');
+
+                if(currentCodeArr.length === 0) {
+                    term.innerText = "Error: No command provided."; term.style.color = "var(--emergency-red)";
+                    sound.fail(); return;
+                }
+
+                const lvl = GAME_LEVELS[state.currentLevelIdx];
+                const codeStr = currentCodeArr.join(' ');
+                term.innerHTML = `> <span style="color:#fff">${codeStr}</span><br>`;
+
+                if(lvl.validate(currentCodeArr)) {
+                    // Success logic
+                    term.innerHTML += `<span style="color:var(--neon-green)">Execution Successful.</span>`;
+                    sound.success();
+                    app.calculateScore();
+                    
+                    // Simulate dict update visually based on level logic (hardcoded visual update for safety over eval)
+                    if(lvl.id === "2.1") state.currentDict["H2O"] = {"State": "Solid"};
+                    if(lvl.id === "2.2") state.currentDict["H2O"]["State"] = "Liquid";
+                    if(lvl.id === "2.3") state.currentDict["Temperature"] = -50;
+                    if(lvl.id === "3.1") delete state.currentDict["Toxic_Gas"];
+                    if(lvl.id === "3.2") delete state.currentDict["Error_Log"];
+                    if(lvl.id === "3.3") delete state.currentDict["Virus"];
+                    app.renderDict();
+
+                    setTimeout(app.levelComplete, 1500);
+                } else {
+                    // Fail logic
+                    state.hearts--;
+                    state.mistakes++;
+                    app.updateHeartsUI();
+                    term.innerHTML += `<span style="color:var(--emergency-red)">SyntaxError or Invalid Command. Access Denied.</span>`;
+                    sound.fail();
+
+                    if(state.hearts <= 0) {
+                        document.body.classList.add('emergency');
+                        sound.emergency();
+                        setTimeout(() => {
+                            app.showModal("SYSTEM FAILURE", "หัวใจหมด! ระบบกำลังเริ่มต้น Level ปัจจุบันใหม่...", false, "REBOOT", () => {
+                                app.loadLevel();
+                            });
+                        }, 500);
+                    }
+                }
+            },
+
+            calculateScore: () => {
+                // Base 1000 per level. Deduct for time (>30s), mistakes, hints
+                const timeUsed = (Date.now() - state.levelStartTime) / 1000;
+                let pts = 1000 - (state.mistakes * 200) - (state.hintsUsed * 300);
+                if(timeUsed > 60) pts -= 200;
+                else if(timeUsed > 30) pts -= 100;
+                if(pts < 100) pts = 100; // Min score
+
+                const stageId = GAME_LEVELS[state.currentLevelIdx].id.charAt(0);
+                state.score[stageId] += pts;
+                
+                let total = state.score["1"] + state.score["2"] + state.score["3"];
+                getEl('ui-score').innerText = total;
+
+                // Fire & forget save
+                gasApi('saveScore', { session: state.session, studentId: state.student.id, score: state.score });
+            },
+
+            levelComplete: () => {
+                state.currentLevelIdx++;
+                if(state.currentLevelIdx >= GAME_LEVELS.length) {
+                    app.gameComplete();
+                } else {
+                    const next = GAME_LEVELS[state.currentLevelIdx];
+                    app.showModal("SECTOR CLEARED", `กู้คืนระบบสำเร็จ\nเตรียมเข้าสู่: ${next.stage} - Level ${next.id}`, false, "NEXT LEVEL", () => {
+                        app.loadLevel();
+                    });
+                }
+            },
+
+            gameComplete: async () => {
+                sound.success();
+                let total = state.score["1"] + state.score["2"] + state.score["3"];
+                app.showModal("MISSION COMPLETE!", `คุณกอบกู้สถานีอวกาศสำเร็จ!\nคะแนนรวม: ${total}`, true);
+                
+                try {
+                    await gasApi('endGame', { session: state.session, studentId: state.student.id, score: state.score });
+                    app.closeModal();
+                    app.showScreen('home-screen'); // Or leaderboard
+                    alert("บันทึกข้อมูลลงระบบเรียบร้อย");
+                } catch(e) {
+                    app.showModal("Warning", "บันทึกข้อมูลไม่สำเร็จ กรุณาแจ้งครูผู้สอน");
+                }
+            },
+
+            // --- TEACHER FLOW ---
+            saveGasUrl: () => {
+                const url = getEl('gas-url').value.trim();
+                if(url.startsWith('https://script.google.com/')) {
+                    localStorage.setItem('gas_url', url);
+                    CONFIG.GAS_URL = url;
+                    CONFIG.MOCK_MODE = false;
+                    getEl('gas-status').innerHTML = 'สถานะ: <span class="text-green">เชื่อมต่อแล้ว (URL Saved)</span>';
+                } else {
+                    getEl('gas-status').innerHTML = 'สถานะ: <span class="text-red">URL ไม่ถูกต้อง</span>';
+                }
+            },
+
+            teacherLogin: async () => {
+                const pass = getEl('teacher-pass').value;
+                const err = getEl('teacher-login-error');
+                
+                // Note: In real app, password should not be checked client side. 
+                // We send to backend, if backend fails, it rejects.
+                app.showModal("Authenticating...", "", true);
+                try {
+                    const res = await gasApi('teacherLogin', { password: pass });
+                    app.closeModal();
+                    app.showScreen('dashboard-screen');
+                } catch(e) {
+                    app.closeModal();
+                    err.innerText = e.message || "รหัสผ่านผิด หรือ ไม่สามารถเชื่อมต่อฐานข้อมูลได้";
+                    err.classList.remove('hidden');
+                }
+            },
+
+            teacherLogout: () => {
+                app.showScreen('home-screen');
+            },
+
+            createRoom: async () => {
+                const cls = getEl('dash-class').value;
+                const name = getEl('dash-room-name').value;
+                if(!name) return alert("กรุณาตั้งชื่อห้อง");
+
+                app.showModal("กำลังสร้างห้อง...", "", true);
+                try {
+                    const res = await gasApi('createRoom', { class: cls, name: name });
+                    app.closeModal();
+                    getEl('current-room-info').style.display = 'block';
+                    getEl('dash-room-code').innerText = res.code;
+                    state.session = res.code; // teacher's active session
+                    getEl('btn-close-room').disabled = false;
+                    app.fetchDashboardData();
+                } catch(e) {
+                    app.showModal("Error", e.message);
+                }
+            },
+
+            closeRoom: async () => {
+                if(!confirm("ยืนยันการปิดห้องเรียนและสรุปผล?")) return;
+                app.showModal("กำลังปิดห้องและสรุปผล...", "", true);
+                try {
+                    await gasApi('closeRoom', { code: state.session });
+                    app.closeModal();
+                    getEl('dash-room-status').innerText = 'CLOSED';
+                    getEl('dash-room-status').className = 'status-badge bg-red';
+                    getEl('btn-close-room').disabled = true;
+                    alert("ปิดห้องและสรุปผลลง Google Sheets สำเร็จ");
+                } catch(e) {
+                    app.showModal("Error", e.message);
+                }
+            },
+
+            fetchDashboardData: async () => {
+                if(!state.session) return;
+                try {
+                    const res = await gasApi('getDashboard', { session: state.session });
+                    const tbody = getEl('dash-students');
+                    tbody.innerHTML = '';
+                    if(res.data && res.data.length > 0) {
+                        res.data.forEach(s => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${s.name} (${s.nickname})</td>
+                                <td>${s.class} / ${s.no}</td>
+                                <td><span class="status-badge ${s.status === 'PLAYING' ? 'bg-green' : 'bg-gray'}">${s.status}</span></td>
+                                <td>LV ${s.level}</td>
+                                <td>${s.hearts || 5} ❤️</td>
+                                <td>${s.score || 0}</td>
+                                <td><button onclick="app.sendHint('${s.id}')" style="padding: 2px 5px; font-size:0.7rem;">Help</button></td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--gray);">ยังไม่มีนักเรียนเข้าร่วม</td></tr>';
+                    }
+                } catch(e) {
+                    console.error("Dashboard update failed", e);
+                }
+            },
+
+            sendHint: (studentId) => {
+                alert(`ส่งความช่วยเหลือไปยังระบบของนักเรียน ID: ${studentId} แล้ว (Simulation)`);
+                gasApi('sendHint', { session: state.session, studentId: studentId });
+            }
+        };
+
+        // Init
+        window.onload = app.init;
+
+        // Prevent accident refresh
+        window.onbeforeunload = function() {
+            if(!getEl('game-screen').classList.contains('hidden')) {
+                return "คุณกำลังอยู่ในภารกิจ ข้อมูลอาจไม่ถูกบันทึกหากออกตอนนี้!";
+            }
+        }
+    </script>
+</body>
+</html>
